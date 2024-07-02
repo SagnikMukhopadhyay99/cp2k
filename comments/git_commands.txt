@@ -1,0 +1,6 @@
+#To add any change in a file -----------
+   step-1: locate the directory where the file is present
+   step-2: change whatever is required
+   step-3: write "git add <file_name> in terminal to make the file stage state
+   step-4: write "git commit -m "commitment messege" in terminal to commit
+   step-5: write "git push origin master" in terminal to push
