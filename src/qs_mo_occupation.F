@@ -671,7 +671,7 @@ CONTAINS
 
       ! zeros don't count as uniform
       mo_set%uniform_occupation = has_uniform_occupation(mo_set=mo_set)
-      PRINT*, "Sagnik Mukhopadhyay added a change", mo_set%uniform_occupation
+     ! PRINT*, "Sagnik Mukhopadhyay added a change", mo_set%uniform_occupation
 
       CALL timestop(handle)
 
