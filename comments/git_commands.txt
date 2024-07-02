@@ -4,6 +4,8 @@
    step-3: write "git add <file_name> in terminal to make the file stage state
    step-4: write "git commit -m "commitment messege"" in terminal to commit
    step-5: write "git push origin master" in terminal to push
+   
+   
 #To add a new file ------------
    step-1: locate the directory where the new file will be added
    step-2: add the file
