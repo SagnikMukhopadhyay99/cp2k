@@ -1,3 +1,13 @@
+#GIT is a source control tool (surveillance system)
+#This is also called "Version Control System (VCS)", which records activity in source code
+#There are two types of VCS
+		1. Centralized VCS: Everything is done in server itself
+			EXAMPLE: SVN
+		2. Distributed VCS: Full copy of master file is clonned in local system and after modification it is returned in master file and commited
+			EXAMPLE: GIT
+
+
+
 #To add any change in a file -----------
    step-1: locate the directory where the file is present
    step-2: change whatever is required
