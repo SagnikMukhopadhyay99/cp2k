@@ -86,6 +86,11 @@ MODULE md_energies
    USE thermostat_types,                ONLY: thermostats_type
    USE thermostat_utils,                ONLY: print_thermostats_status
    USE virial_types,                    ONLY: virial_type
+   
+   ! This is a part of ninth change added by Sagnik Mukhopadhyay (9.3)
+    USE qs_energy_types,                ONLY: qs_energy_type
+    USE qs_environment_types,           ONLY: get_qs_env,&
+                                              qs_environment_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -208,6 +213,9 @@ CONTAINS
 
       CALL compute_conserved_quantity(md_env, md_ener, tkind=tkind, &
                                       tshell=tshell, natom=natom)
+                                      
+      ! This is part of eighth change added by Sagnik Mukhopdhyay
+         PRINT*, "Sagnik Mukhopadhyay change_8.1", force_env%qs_env%total_zeff_corr
 
    END SUBROUTINE md_energy
 
@@ -284,6 +292,11 @@ CONTAINS
       TYPE(thermal_regions_type), POINTER                :: thermal_regions
       TYPE(thermostats_type), POINTER                    :: thermostats
       TYPE(virial_type), POINTER                         :: virial
+      
+      ! This is a part of ninth change added by Sagnik mukhopadhyay
+      !TYPE(qs_energy_type), POINTER                      :: energy
+      !TYPE(qs_environment_type)                          :: qs_env_mukhopadhyay
+       
 
       NULLIFY (logger)
       logger => cp_get_default_logger()
@@ -473,6 +486,9 @@ CONTAINS
          IF (ASSOCIATED(force_env%qs_env)) THEN
             CALL write_polarisability_tensor(force_env, motion_section, itimes, time*femtoseconds, my_pos, my_act)
          END IF
+         
+         ! This is part of eighth change added by Sagnik Mukhopdhyay
+         !PRINT*, "Sagnik Mukhopadhyay change_8.1", force_env%qs_env%total_zeff_corr
 
          ! Temperature per Kinds
          IF (simpar%temperature_per_kind) THEN
@@ -569,6 +585,12 @@ CONTAINS
       END IF
       init = .FALSE.
       CALL set_md_env(md_env, init=init)
+      
+      ! This is a part of ninth change added by sagnik Mukhopadhyay (9.3)
+      !CALL get_qs_env(qs_env=qs_env_mukhopadhyay, energy=energy)
+      !PRINT*, "Sagnik Mukhopadhyay change_9.3", energy%surf_dipole
+      
+      
       CALL timestop(handle)
    END SUBROUTINE md_write_output
 
@@ -727,7 +749,7 @@ CONTAINS
                   WRITE (iw, '(T2,A,T39,2(1X,E20.12))') &
                      'MD| Kinetic energy [hartree]', md_ener%ekin, averages%avekin
                   WRITE (iw, '(T2,A,T39,2(1X,F20.6))') &
-                     'MD| Temperature [K]', md_ener%temp_part, averages%avetemp
+                     'MD| Temperature [K] Mukhopadhyay', md_ener%temp_part, averages%avetemp
                ELSE
                   WRITE (iw, '(T2,A,T39,2(1X,E20.12))') &
                      'MD| Total kinetic energy [hartree]', md_ener%ekin, averages%avekin

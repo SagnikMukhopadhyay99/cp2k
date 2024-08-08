@@ -519,6 +519,9 @@ CONTAINS
             'THERMOSTAT| End of thermostat information for '//TRIM(label)
       END IF
       CALL cp_print_key_finished_output(iw, logger, section, "PRINT%THERMOSTAT_INFO")
+      
+      ! This is a part of seventh change added by Sagnik Mukhopadhyay
+      PRINT*, "Sagnik Mukhopadhyay Change_7.1", 2.0d0*kin_energy/3.0d0
 
    END SUBROUTINE thermostat_info
 
