@@ -37,7 +37,7 @@ project(
   cp2k
   DESCRIPTION "CP2K"
   HOMEPAGE_URL "https://www.cp2k.org"
-  VERSION "2024.1"
+  VERSION "2024.2"
   LANGUAGES Fortran C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
@@ -282,7 +282,7 @@ set_property(
 
 set(CP2K_USE_ACCEL
     "NONE"
-    CACHE STRING "Set hardware acceleartion support: CUDA, HIP")
+    CACHE STRING "Set hardware acceleration support: CUDA, HIP")
 
 set_property(CACHE CP2K_USE_ACCEL
              PROPERTY STRINGS ${CP2K_SUPPORTED_ACCELERATION_TARGETS})
@@ -868,6 +868,12 @@ if(CP2K_USE_FFTW3)
           "    - libraries : ${CP2K_FFTW3_LINK_LIBRARIES}\n\n")
 endif()
 
+if(CP2K_USE_PLUMED)
+  message("  - PLUMED\n"
+          "    - include directories : ${CP2K_PLUMED_INCLUDE_DIRS}\n"
+          "    - libraries : ${CP2K_PLUMED_LINK_LIBRARIES}\n\n")
+endif()
+
 if(CP2K_USE_LIBXSMM)
   message(
     "  - libxsmm\n"
@@ -988,7 +994,7 @@ if(NOT CP2K_USE_DLAF)
   message("   - DLAF")
 endif()
 
-if(NOT CP2K_USE_PLUMMED)
+if(NOT CP2K_USE_PLUMED)
   message("   - PLUMED")
 endif()
 
