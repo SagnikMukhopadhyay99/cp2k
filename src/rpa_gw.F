@@ -4428,8 +4428,6 @@ CONTAINS
                                            - Eigenval(n_level_gw_ref) + Eigenval_scf(n_level_gw_ref)
       END IF
 
-      iunit = cp_logger_get_default_unit_nr()
-
       IF (PRESENT(min_level_self_energy) .AND. PRESENT(max_level_self_energy)) THEN
          IF (n_level_gw_ref >= min_level_self_energy .AND. &
              n_level_gw_ref <= max_level_self_energy) THEN
@@ -4449,6 +4447,7 @@ CONTAINS
       IF (ndos /= 0) THEN
          ! Hedin shift not implemented
          CPASSERT(.NOT. do_hedin_shift)
+         iunit = cp_logger_get_default_unit_nr()
          DO idos = 1, ndos
             omega_dos = dos_lower_bound + REAL(idos - 1, KIND=dp)*dos_precision
             omega_dos_pade_eval = omega_dos - e_fermi
@@ -4480,30 +4479,31 @@ CONTAINS
       END IF
 
       IF (PRESENT(min_level_self_energy) .AND. PRESENT(max_level_self_energy)) THEN
-      IF (n_level_gw_ref >= min_level_self_energy .AND. &
-          n_level_gw_ref <= max_level_self_energy .AND. iunit > 0) THEN
+         iunit = cp_logger_get_default_unit_nr()
+         IF (n_level_gw_ref >= min_level_self_energy .AND. &
+             n_level_gw_ref <= max_level_self_energy .AND. iunit > 0) THEN
 
-         CALL open_file('self_energy_re_'//TRIM(string_level)//'.dat', unit_number=iunit, &
-                        file_status="UNKNOWN", file_action="WRITE")
-         DO idos = 1, ndos
-            omega_dos = dos_lower_bound + REAL(idos - 1, KIND=dp)*dos_precision
-            WRITE (iunit, '(F17.10, F17.10)') omega_dos*evolt, vec_sigma_real(idos)*evolt
-         END DO
+            CALL open_file('self_energy_re_'//TRIM(string_level)//'.dat', unit_number=iunit, &
+                           file_status="UNKNOWN", file_action="WRITE")
+            DO idos = 1, ndos
+               omega_dos = dos_lower_bound + REAL(idos - 1, KIND=dp)*dos_precision
+               WRITE (iunit, '(F17.10, F17.10)') omega_dos*evolt, vec_sigma_real(idos)*evolt
+            END DO
 
-         CALL close_file(iunit)
+            CALL close_file(iunit)
 
-         CALL open_file('self_energy_im_'//TRIM(string_level)//'.dat', unit_number=iunit, &
-                        file_status="UNKNOWN", file_action="WRITE")
-         DO idos = 1, ndos
-            omega_dos = dos_lower_bound + REAL(idos - 1, KIND=dp)*dos_precision
-            WRITE (iunit, '(F17.10, F17.10)') omega_dos*evolt, vec_sigma_imag(idos)*evolt
-         END DO
+            CALL open_file('self_energy_im_'//TRIM(string_level)//'.dat', unit_number=iunit, &
+                           file_status="UNKNOWN", file_action="WRITE")
+            DO idos = 1, ndos
+               omega_dos = dos_lower_bound + REAL(idos - 1, KIND=dp)*dos_precision
+               WRITE (iunit, '(F17.10, F17.10)') omega_dos*evolt, vec_sigma_imag(idos)*evolt
+            END DO
 
-         CALL close_file(iunit)
+            CALL close_file(iunit)
 
-         DEALLOCATE (vec_sigma_real)
-         DEALLOCATE (vec_sigma_imag)
-      END IF
+            DEALLOCATE (vec_sigma_real)
+            DEALLOCATE (vec_sigma_imag)
+         END IF
       END IF
 
       !*** perform crossing search
@@ -4571,6 +4571,7 @@ CONTAINS
 
          END IF
 
+         iunit = cp_logger_get_default_unit_nr()
          CALL open_file(TRIM(filename), unit_number=iunit, file_status="UNKNOWN", file_action="WRITE")
 
          num_omega = 10000
@@ -5095,15 +5096,25 @@ CONTAINS
                WRITE (unit_nr, '(T3,A,F42.4)') 'GW direct gap at current kpoint (eV)', E_GAP_GW*evolt
             ELSE IF (do_alpha) THEN
                WRITE (unit_nr, '(T3,A)') ' '
-               WRITE (unit_nr, '(T3,A,F36.4)') 'Alpha GW direct gap at current kpoint (eV)', E_GAP_GW*evolt
+               WRITE (unit_nr, '(T3,A,F36.4)') 'Alpha GW direct gap at current kpoint (eV)', &
+                  E_GAP_GW*evolt
             ELSE IF (do_beta) THEN
                WRITE (unit_nr, '(T3,A)') ' '
-               WRITE (unit_nr, '(T3,A,F37.4)') 'Beta GW direct gap at current kpoint (eV)', E_GAP_GW*evolt
+               WRITE (unit_nr, '(T3,A,F37.4)') 'Beta GW direct gap at current kpoint (eV)', &
+                  E_GAP_GW*evolt
             END IF
          ELSE
             IF (do_closed_shell) THEN
                WRITE (unit_nr, '(T3,A)') ' '
-               WRITE (unit_nr, '(T3,A,F57.4)') 'GW HOMO-LUMO gap (eV)', E_GAP_GW*evolt
+               IF (count_ev_sc_GW > 1) THEN
+                  WRITE (unit_nr, '(T3,A,I3,A,F39.4)') 'HOMO-LUMO gap in evGW iteration', &
+                     count_ev_sc_GW, ' (eV)', E_GAP_GW*evolt
+               ELSE IF (count_sc_GW0 > 1) THEN
+                  WRITE (unit_nr, '(T3,A,I3,A,F38.4)') 'HOMO-LUMO gap in evGW0 iteration', &
+                     count_sc_GW0, ' (eV)', E_GAP_GW*evolt
+               ELSE
+                  WRITE (unit_nr, '(T3,A,F55.4)') 'G0W0 HOMO-LUMO gap (eV)', E_GAP_GW*evolt
+               END IF
             ELSE IF (do_alpha) THEN
                WRITE (unit_nr, '(T3,A)') ' '
                WRITE (unit_nr, '(T3,A,F51.4)') 'Alpha GW HOMO-LUMO gap (eV)', E_GAP_GW*evolt

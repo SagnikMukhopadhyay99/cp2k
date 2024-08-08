@@ -222,7 +222,7 @@ MODULE mp2_types
       INTEGER                                            :: num_omega_points = 0
       INTEGER                                            :: bse_spin_config = 0, &
                                                             bse_diag_method = 0, &
-                                                            bse_approx = 0, &
+                                                            flag_tda = 0, &
                                                             num_exc_en = 0, &
                                                             num_print_exc = 0, &
                                                             num_add_start_z_space = 0, &
@@ -234,7 +234,7 @@ MODULE mp2_types
                                                             eps_exc_en = 0.0_dp, &
                                                             eps_x = 0.0_dp, &
                                                             bse_cutoff_occ = 0.0_dp, &
-                                                            bse_cutoff_virt = 0.0_dp, &
+                                                            bse_cutoff_empty = 0.0_dp, &
                                                             z_space_energy_cutoff = 0.0_dp
       LOGICAL                                            :: do_bse = .FALSE., &
                                                             bse_debug_print = .FALSE., &
@@ -263,6 +263,13 @@ MODULE mp2_types
                                                             regularization_minimax = 0.0_dp, &
                                                             soc_energy_window = 0.0_dp
       INTEGER, DIMENSION(:), POINTER                     :: stride_loc_bandgap => NULL()
+
+      !BSE optical spectrum
+      REAL(KIND=dp)                                      :: bse_spectrum_freq_step_size = 0.0_dp, &
+                                                            bse_spectrum_freq_start = 0.0_dp, &
+                                                            bse_spectrum_freq_end = 0.0_dp, &
+                                                            bse_spectrum_eta = 0.0_dp
+      LOGICAL                                            :: bse_print_spectrum = .FALSE.
 
       !GW_DOS
       REAL(KIND=dp)                                      :: dos_upper = 0.0_dp, &

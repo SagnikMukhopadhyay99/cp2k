@@ -493,8 +493,9 @@ excited-states:
 
 In this case, all the time-dependent MO are involved in the projection and stored separately. This
 time, the reference wave function is supposed to be from an XAS_TDP calculation, see Linear Response
-input file in the [tutorial archive](https://www.cp2k.org/_media/howto:rtp_field_xas.zip). Running
-with the proper parameters, this XAS_TDP run saves one .wfn file per excited state. Using
+input file in the
+[tutorial archive](https://github.com/cp2k/cp2k-examples/tree/master/rtp_field_xas). Running with
+the proper parameters, this XAS_TDP run saves one .wfn file per excited state. Using
 `REFERENCE_TYPE XAS_TDP`, the projection uses automatically the state saved in the produced wave
 function file as the reference:
 
@@ -516,8 +517,9 @@ excited state for the Oxygen 1s is degenerate: there are two available excited s
 the $xy$-plane. That is why a third projection is requested which uses the other excited state
 proposed by the XAD_TDP module. Therefore, the excited state should be understood as the sum over
 the two equivalent excited states:
-\$$
+
+$$
 n_{Exc}(t) = \rho_{\omega}(t) + \rho_{\omega'}(t)
 $$
-where $\\omega'$ stands for the other equivalent excited state, with $\\omega=\\omega'=529\$
-eV.
+
+where $\omega'$ stands for the other equivalent excited state, with $\omega=\omega'=529$ eV.

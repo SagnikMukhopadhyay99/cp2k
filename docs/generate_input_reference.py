@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 import re
 import sys
+from datetime import datetime
 from collections import defaultdict
 from functools import cache
 
@@ -16,62 +17,82 @@ SectionPath = Tuple[str, ...]
 
 # ======================================================================================
 def main() -> None:
-    if len(sys.argv) != 3:
-        print("generate_input_reference.py <cp2k_input.xml> <references.html>")
+    if len(sys.argv) != 2:
+        print("generate_input_reference.py <cp2k_input.xml>")
         sys.exit(1)
 
-    cp2k_input_xml_fn, references_html_fn = sys.argv[1:]
+    cp2k_input_xml_fn = sys.argv[1]
     output_dir = Path(__file__).resolve().parent
-
-    build_bibliography(references_html_fn, output_dir)
-    build_input_reference(cp2k_input_xml_fn, output_dir)
+    root = ET.parse(cp2k_input_xml_fn).getroot()
+    build_bibliography(root, output_dir)
+    build_units_reference(root, output_dir)
+    build_input_reference(root, output_dir)
 
 
 # ======================================================================================
-def build_bibliography(references_html_fn: str, output_dir: Path) -> None:
-    content = Path(references_html_fn).read_text()
-    entries = re.findall(r"<TR>.*?</TR>", content, re.DOTALL)
+def get_reference_sortkey(ref: ET.Element) -> str:
+    year = int(get_text(ref.find("YEAR")))
+    key = ref.attrib.get("key")
+    inverse_year = 10000 - year
+    return f"{inverse_year:05d}_{key}"
+
+
+# ======================================================================================
+def build_bibliography(root: ET.Element, output_dir: Path) -> None:
+    references = root.findall("REFERENCE")
+    references.sort(key=get_reference_sortkey)
 
     output = []
     output += ["%", "% This file was created by generate_input_reference.py", "%"]
     output += ["# Bibliography", ""]
 
-    for entry in entries:
-        pattern = (
-            r'<TR><TD>\[(.*?)\]</TD><TD>\n <A NAME="reference_\d+">(.*?)</A><br>'
-            r"(.*?)</TD></TR>"
-        )
-        parts = re.search(pattern, entry, re.DOTALL)
-        assert parts
-        key = parts.group(1)
-        title = parts.group(3).strip()
-        if "<br>" in parts.group(2):
-            m = re.match(r"(.*?)<br>(.*)", parts.group(2), re.DOTALL)
-            assert m
-            authors, mix = m.groups()
-        else:
-            authors, mix = "", parts.group(2)
-
-        if "https://doi.org" in mix:
-            m = re.match(r'\s*<A HREF="(.*?)">(.*?)</A>', mix, re.DOTALL)
-            assert m
-            doi, ref = m.groups()
-        else:
-            doi, ref = "", mix.strip()
+    for r in references:
+        key = r.attrib.get("key")
+        authors = ", ".join([get_text(a) for a in r.findall("AUTHOR")])
+        doi = get_text(r.find("DOI"))
+        source = get_text(r.find("SOURCE"))
+        volume = get_text(r.find("VOLUME"))
+        pages = get_text(r.find("PAGES"))
+        year = get_text(r.find("YEAR"))
+        title = get_text(r.find("TITLE"))
+        ref = source
+        ref += f" **{volume}**" if volume else ""
+        ref += f", {pages}"
+        ref += f" ({year})" if year else ""
 
         output += [f"({key})=", f"## {key}", ""]
         if doi:
-            output += [f"{authors} **{title}** _[{ref}]({doi})_", ""]
+            output += [f"{authors}, _{title},_ [{ref}](https://doi.org/{doi}).", ""]
         else:
-            output += [f"{authors} **{title}** _{ref}_", ""]
+            output += [f"{authors}, _{title},_ {ref}.", ""]
 
     write_file(output_dir / "bibliography.md", "\n".join(output))
 
 
 # ======================================================================================
-def build_input_reference(cp2k_input_xml_fn: str, output_dir: Path) -> None:
-    tree = ET.parse(cp2k_input_xml_fn)
-    root = tree.getroot()
+def build_units_reference(root: ET.Element, output_dir: Path) -> None:
+    output = []
+    output += ["%", "% This file was created by generate_input_reference.py", "%"]
+    output += ["# Units", "", "Units of measurement available in CP2K's input.", ""]
+
+    for unit_kind in root.findall("UNIT_KIND"):
+        kind = unit_kind.attrib.get("name")
+        assert kind
+        article = "an" if kind[0] in "aeiou" else "a"
+        output += [f"## {kind.capitalize()}", ""]
+        output += [f"Possible units of measurement for {article} {kind}."]
+        output += [f"The `[{kind}]` entry acts like a dummy flag (assumes the"]
+        output += [f"unit of measurement of {kind} is in internal units),"]
+        output += [f"useful for dimensional analysis.", ""]
+        for unit in unit_kind.findall("UNIT"):
+            output += [f"- `{get_text(unit)}`"]
+        output += [""]
+
+    write_file(output_dir / "units.md", "\n".join(output))
+
+
+# ======================================================================================
+def build_input_reference(root: ET.Element, output_dir: Path) -> None:
     num_files_written = process_section(root, ("CP2K_INPUT",), False, output_dir)
 
     # Build landing page.
@@ -235,6 +256,7 @@ def render_section_header(
     # Collect information from section fields.
     repeats = "repeats" in section.attrib and section.attrib["repeats"] == "yes"
     description = get_text(section.find("DESCRIPTION"))
+    deprecation_notice = get_text(section.find("DEPRECATION_NOTICE"))
     location = get_text(section.find("LOCATION"))
     section_name = section_path[-1]  # section.find("NAME") doesn't work for root
     section_xref = ".".join(section_path)  # used for cross-referencing
@@ -248,6 +270,10 @@ def render_section_header(
     collision_resolution_suffix = "_SECTION" if has_name_collision else ""
     output += [f"({section_xref}{collision_resolution_suffix})="]
     output += [f"# {section_name}", ""]
+    if deprecation_notice:
+        output += ["```{warning}"]
+        output += ["This section is deprecated and may be removed in a future version."]
+        output += ["", escape_markdown(deprecation_notice), "", "```", ""]
     if repeats:
         output += ["**Section can be repeated.**", ""]
     if references:

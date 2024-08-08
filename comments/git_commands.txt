@@ -1,0 +1,27 @@
+#GIT is a source control tool (surveillance system)
+#This is also called "Version Control System (VCS)", which records activity in source code
+#There are two types of VCS
+	1. Centralized VCS: Everything is done in server itself
+		EXAMPLE: SVN
+	2. Distributed VCS: Full copy of master file is clonned in local system and after modification it is returned in master file and commited
+		EXAMPLE: GIT
+
+
+
+#To add any change in a file -----------
+   step-1: locate the directory where the file is present
+   step-2: change whatever is required
+   step-3: write "git add <file_name> in terminal to make the file stage state
+   step-4: write "git commit -m "commitment messege"" in terminal to commit
+   step-5: write "git push origin master" in terminal to push
+   
+   
+#To add a new file ------------
+   step-1: locate the directory where the new file will be added
+   step-2: add the file
+   step-3: write whatever is needed in the file
+   step-4: locate the respective repo in the terminal
+   step-5: write "git add <file_name>" in termional to add the file
+   step-6: write "git add ." if multiple files are added in same or different directory
+   step-7: write "git commit -m "commit messeges"" in terminal to commit
+   step-8: write "git push origin master" in terminal to push

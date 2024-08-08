@@ -37,7 +37,7 @@ MODULE input_cp2k_mp2
       ot_precond_s_inverse, ri_default, ri_rpa_g0w0_crossing_bisection, &
       ri_rpa_g0w0_crossing_newton, ri_rpa_g0w0_crossing_z_shot, soc_lda, soc_none, soc_pbe, &
       wfc_mm_style_gemm, wfc_mm_style_syrk, z_solver_cg, z_solver_pople, z_solver_richardson, &
-      z_solver_sd, rpa_exchange_none, rpa_exchange_axk, rpa_exchange_sosex
+      z_solver_sd, rpa_exchange_none, rpa_exchange_axk, rpa_exchange_sosex, G0W0, evGW0, evGW
    USE input_cp2k_hfx, ONLY: create_hfx_section
    USE input_cp2k_kpoints, ONLY: create_kpoint_set_section
    USE input_keyword_types, ONLY: keyword_create, &
@@ -682,7 +682,9 @@ CONTAINS
 
       CPASSERT(.NOT. ASSOCIATED(section))
       CALL section_create(section, __LOCATION__, name="GW", &
-                          description="Parameters influencing the RI-G0W0 method", &
+                          description="Parameters influencing GW calculations on molecules, "// &
+                          "see also 'Electronic band structure from GW', "// &
+                          "https://manual.cp2k.org/trunk/methods/properties/bandstructure_gw.html.", &
                           n_keywords=24, n_subsections=1, repeats=.FALSE.)
 
       NULLIFY (keyword, subsection)
@@ -694,14 +696,32 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
+      CALL keyword_create(keyword, __LOCATION__, name="SELF_CONSISTENCY", &
+                          description="Decide the level of self-consistency of eigenvalues "// &
+                          "(= quasiparticle energies = single-electron energies) in GW. "// &
+                          "Updates of Kohn-Sham orbitals (for example qsGW) are not implemented. "// &
+                          "For details which type of eigenvalue self-consistency might be good, "// &
+                          "please consult Golze, Dvorak, Rinke, Front. Chem. 2019.", &
+                          usage="GW_SELF_CONSISTENCY evGW0", &
+                          enum_c_vals=s2a("G0W0", "evGW0", "evGW"), &
+                          enum_i_vals=(/G0W0, evGW0, evGW/), &
+                          enum_desc=s2a("Use DFT eigenvalues; not update.", &
+                                        "Update DFT eigenvalues in G, not in W.", &
+                                        "Update DFT eigenvalues in G and W."), &
+                          default_i_val=G0W0)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
       CALL keyword_create(keyword, __LOCATION__, name="CORR_MOS_OCC", &
                           variants=(/"CORR_OCC"/), &
-                          description="Number of occupied MOs whose energies are corrected by RI-G0W0. "// &
+                          description="Number of occupied MOs whose energies are corrected in GW. "// &
                           "Counting beginning from HOMO, e.g. 3 corrected occ. MOs correspond "// &
                           "to correction of HOMO, HOMO-1 and HOMO-2. Numerical effort and "// &
                           "storage of RI-G0W0 increase linearly with this number. In case you "// &
                           "want to correct all occ. MOs, insert either a negative number or "// &
-                          "a number larger than the number of occ. MOs.", &
+                          "a number larger than the number of occ. MOs. Invoking CORR_MOS_OCC -2 "// &
+                          "together with a BSE cutoff, sets a sufficiently large CORR_MOS_OCC "// &
+                          "for the given BSE cutoff deduced from DFT eigenvalues.", &
                           usage="CORR_OCC 3", &
                           default_i_val=10)
       CALL section_add_keyword(section, keyword)
@@ -709,12 +729,14 @@ CONTAINS
 
       CALL keyword_create(keyword, __LOCATION__, name="CORR_MOS_VIRT", &
                           variants=(/"CORR_VIRT"/), &
-                          description="Number of virtual MOs whose energies are corrected by RI-G0W0. "// &
+                          description="Number of virtual MOs whose energies are corrected by GW. "// &
                           "Counting beginning from LUMO, e.g. 3 corrected occ. MOs correspond "// &
                           "to correction of LUMO, LUMO+1 and LUMO+2. Numerical effort and "// &
                           "storage of RI-G0W0 increase linearly with this number. In case you "// &
                           "want to correct all virt. MOs, insert either a negative number or "// &
-                          "a number larger than the number of virt. MOs.", &
+                          "a number larger than the number of virt. MOs. Invoking CORR_MOS_VIRT -2 "// &
+                          "together with a BSE cutoff, sets a sufficiently large CORR_MOS_VIRT "// &
+                          "for the given BSE cutoff deduced from DFT eigenvalues.", &
                           usage="CORR_VIRT 3", &
                           default_i_val=10)
       CALL section_add_keyword(section, keyword)
@@ -773,16 +795,21 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, __LOCATION__, name="EV_GW_ITER", &
-                          description="Maximum number of iterations for eigenvalue self-consistency cycle. The "// &
-                          "computational effort of GW scales linearly with this number. ", &
+                          description="Maximum number of iterations for eigenvalue "// &
+                          "self-consistency cycle. The computational effort of GW scales "// &
+                          "linearly with this number. In case of choosing "// &
+                          "GW_SELF_CONSISTENCY EVGW, the code sets EV_GW_ITER 10.", &
                           usage="EV_GW_ITER 3", &
                           default_i_val=1)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, __LOCATION__, name="SC_GW0_ITER", &
-                          description="Maximum number of iterations for GW0 self-consistency cycle. The "// &
-                          "computational effort of GW is not much affected by the number of scGW0 cycles. ", &
+                          description="Maximum number of iterations for GW0 "// &
+                          "self-consistency cycle. The computational effort "// &
+                          "of GW is not much affected by the number of scGW0 cycles. "// &
+                          "In case of choosing "// &
+                          "GW_SELF_CONSISTENCY EVGW0, the code sets SC_GW0_ITER 10.", &
                           usage="SC_GW0_ITER 3", &
                           default_i_val=1)
       CALL section_add_keyword(section, keyword)
@@ -1256,7 +1283,7 @@ CONTAINS
                           "enables of electronic excitation energies $\Omega^{(n)}$. The BSE can be solved by diagonalizing "// &
                           "the full ABBA-matrix or by setting B=0, i.e. within the Tamm-Dancoff approximation (TDA). "// &
                          "Preliminary reference: Eq. (35) in PRB 92, 045209 (2015); http://dx.doi.org/10.1103/PhysRevB.92.045209", &
-                          n_keywords=8, n_subsections=2, repeats=.FALSE.)
+                          n_keywords=8, n_subsections=3, repeats=.FALSE.)
 
       NULLIFY (keyword)
 
@@ -1290,11 +1317,11 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, __LOCATION__, name="BSE_APPROX", &
+      CALL keyword_create(keyword, __LOCATION__, name="TDA", &
                           description="Level of approximation applied to BSE calculations. "// &
-                          "Choose between Tamm Dancoff approximation (TDA) and diagonalization of the full ABBA-matrix.", &
-                          usage="&BSE_APPROX TDA", &
-                          enum_c_vals=s2a("TDA", "ABBA", "BOTH"), &
+                          "Choose between Tamm Dancoff approximation (TDA) and/or diagonalization of the full ABBA-matrix.", &
+                          usage="&TDA ON", &
+                          enum_c_vals=s2a("ON", "OFF", "TDA+ABBA"), &
                           enum_i_vals=(/bse_tda, bse_abba, bse_both/), &
                           enum_desc=s2a("The TDA is applied, i.e. B=0.", &
                                         "The ABBA-matrix is diagonalized, i.e. the TDA is not applied.", &
@@ -1304,21 +1331,21 @@ CONTAINS
       CALL keyword_release(keyword)
 
       CALL keyword_create(keyword, __LOCATION__, name="ENERGY_CUTOFF_OCC", &
-                          description="Removing all orbitals with indices i,j from A_ia,jb and B_ia,jb with energy difference "// &
+                          description="Remove all orbitals with indices i,j from A_ia,jb and B_ia,jb with energy difference "// &
                           "to HOMO level larger than the given energy cutoff, i.e. "// &
-                          "$\epsilon_{\mathrm{HOMO}}-\epsilon_a>\mathtt{ENERGY\_CUTOFF\_OCC}$. "// &
+               "$\varepsilon_i\in[\varepsilon_{i=\text{HOMO}}^{GW}-E_\text{cut}^\text{occ},\varepsilon_{i=\text{HOMO}}^{GW}]$. "// &
                           "Can be used to accelerate runtime and reduce memory consumption.", &
                           usage="ENERGY_CUTOFF_OCC 10.0", unit_str="eV", &
                           type_of_var=real_t, default_r_val=-1.0_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
-      CALL keyword_create(keyword, __LOCATION__, name="ENERGY_CUTOFF_VIRT", &
-                          description="Removing all orbitals with indices a,b from A_ia,jb and B_ia,jb with energy difference "// &
+      CALL keyword_create(keyword, __LOCATION__, name="ENERGY_CUTOFF_EMPTY", &
+                          description="Remove all orbitals with indices a,b from A_ia,jb and B_ia,jb with energy difference "// &
                           "to LUMO level larger than the given energy cutoff, i.e. "// &
-                          "$\epsilon_i-\epsilon_{\mathrm{LUMO}}>\mathtt{ENERGY\_CUTOFF\_VIRT}$. "// &
+             "$\varepsilon_a\in[\varepsilon_{a=\text{LUMO}}^{GW},\varepsilon_{a=\text{LUMO}}^{GW}+E_\text{cut}^\text{empty}]$. "// &
                           "Can be used to accelerate runtime and reduce memory consumption.", &
-                          usage="ENERGY_CUTOFF_VIRT 10.0", unit_str="eV", &
+                          usage="ENERGY_CUTOFF_EMPTY 10.0", unit_str="eV", &
                           type_of_var=real_t, default_r_val=-1.0_dp)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
@@ -1332,8 +1359,8 @@ CONTAINS
 
       CALL keyword_create(keyword, __LOCATION__, name="NUM_PRINT_EXC", &
                           description="Number of printed excitation energies. Does not affect computation time.", &
-                          usage="NUM_PRINT_EXC 10", &
-                          default_i_val=10)
+                          usage="NUM_PRINT_EXC 25", &
+                          default_i_val=25)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
@@ -1349,6 +1376,64 @@ CONTAINS
       CALL create_bse_iterat_section(subsection)
       CALL section_add_subsection(section, subsection)
       CALL section_release(subsection)
+
+      NULLIFY (subsection)
+      CALL create_bse_spectrum_section(subsection)
+      CALL section_add_subsection(section, subsection)
+      CALL section_release(subsection)
+
+   END SUBROUTINE
+
+   SUBROUTINE create_bse_spectrum_section(section)
+      TYPE(section_type), POINTER                        :: section
+
+      TYPE(keyword_type), POINTER                        :: keyword
+
+      CPASSERT(.NOT. ASSOCIATED(section))
+      CALL section_create(section, __LOCATION__, name="BSE_SPECTRUM", &
+                          description="Parameters influencing the output of the optical spectrum "// &
+                          "obtained from a BSE calculation.", &
+                          n_keywords=9, n_subsections=0, repeats=.FALSE.)
+
+      NULLIFY (keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="_SECTION_PARAMETERS_", &
+                          description="Activates printing of optical spectrum after a BSE calculation.", &
+                          usage="&BSE .TRUE.", &
+                          default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="FREQUENCY_STEP_SIZE", &
+                          description="Step size of frequencies for the optical spectrum.", &
+                          usage="FREQUENCY_STEP_SIZE 0.1", unit_str="eV", &
+                          type_of_var=real_t, &
+                          default_r_val=cp_unit_to_cp2k(value=0.1_dp, unit_str="eV"))
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="FREQUENCY_STARTING_POINT", &
+                          description="First frequency to print in the optical spectrum.", &
+                          usage="FREQUENCY_STARTING_POINT 0", unit_str="eV", &
+                          type_of_var=real_t, default_r_val=0.0_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="FREQUENCY_END_POINT", &
+                          description="Last frequency to print in the optical spectrum.", &
+                          usage="FREQUENCY_END_POINT 0", unit_str="eV", &
+                          type_of_var=real_t, &
+                          default_r_val=cp_unit_to_cp2k(value=100.0_dp, unit_str="eV"))
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+      CALL keyword_create(keyword, __LOCATION__, name="ETA", &
+                          description="Broadening of the peaks in the optical spectrum.", &
+                          usage="ETA 0.01", unit_str="eV", &
+                          type_of_var=real_t, &
+                          default_r_val=cp_unit_to_cp2k(value=0.01_dp, unit_str="eV"))
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
 
    END SUBROUTINE
 

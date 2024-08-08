@@ -40,10 +40,10 @@ MODULE input_cp2k_properties_dft
       tddfpt_kernel_none, tddfpt_kernel_stda, use_mom_ref_coac, use_mom_ref_com, &
       use_mom_ref_user, use_mom_ref_zero
    USE input_cp2k_atprop, ONLY: create_atprop_section
-   USE input_cp2k_dft, ONLY: create_ddapc_restraint_section, &
-                             create_interp_section, &
-                             create_lrigpw_section, &
+   USE input_cp2k_dft, ONLY: create_interp_section, &
                              create_mgrid_section
+   USE input_cp2k_qs, ONLY: create_ddapc_restraint_section, &
+                            create_lrigpw_section
    USE input_cp2k_kpoints, ONLY: create_kpoint_set_section
    USE input_cp2k_loc, ONLY: create_localize_section
    USE input_cp2k_resp, ONLY: create_resp_section
@@ -2073,6 +2073,18 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
+      CALL keyword_create(keyword, __LOCATION__, name="CUTOFF_RADIUS_RI", &
+                          description="The cutoff radius (in Angstrom) for the truncated  "// &
+                          "Coulomb operator. The larger the cutoff radius, the faster "// &
+                          "converges the resolution of the identity (RI) with respect to the "// &
+                          "RI basis set size. Larger cutoff radius means higher computational "// &
+                          "cost.", &
+                          usage="CUTOFF_RADIUS_RI 3.0", &
+                          default_r_val=cp_unit_to_cp2k(value=3.0_dp, unit_str="angstrom"), &
+                          type_of_var=real_t, unit_str="angstrom")
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
       CALL keyword_create(keyword, __LOCATION__, name="MEMORY_PER_PROC", &
                           description="Specify the available memory per MPI process. Set "// &
                           "`MEMORY_PER_PROC` as accurately as possible for good performance. If "// &
@@ -2112,7 +2124,7 @@ CONTAINS
                           "similar GW eigenvalues as evGW0; at a lower "// &
                           "computational cost.", &
                           usage="HEDIN_SHIFT", &
-                          default_l_val=.TRUE., &
+                          default_l_val=.FALSE., &
                           lone_keyword_l_val=.TRUE.)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
@@ -2153,7 +2165,8 @@ CONTAINS
                           "<https://doi.org/10.1103/PhysRevB.58.3641>, "// &
                           "$V_{\mu\nu}^{\mathrm{SOC}, (\alpha)} = "// &
                           "(\hbar/2) \langle \phi_\mu | \sum_l \Delta "// &
-                          "V_l^\mathrm{SO}(\mathbf{r},\mathbf{r}') L^{(\alpha)} | \phi_\nu \rangle, "// &
+                          "V_l^\mathrm{SO}(\mathbf{r},\mathbf{r}') "// &
+                          "L^{(\alpha)} | \phi_\nu \rangle, "// &
                           "\alpha = x, y, z$.", &
                           n_keywords=1, n_subsections=1, repeats=.FALSE.)
 
@@ -2172,7 +2185,7 @@ CONTAINS
                           "\varepsilon_\mathrm{CBM}+E_\mathrm{window}/2]$. Might be necessary "// &
                           "to use for large systems to prevent numerical instabilities.", &
                           usage="ENERGY_WINDOW 5.0", &
-                          default_r_val=cp_unit_to_cp2k(value=-1.0_dp, unit_str="eV"), &
+                          default_r_val=cp_unit_to_cp2k(value=40.0_dp, unit_str="eV"), &
                           unit_str="eV")
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
