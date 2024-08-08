@@ -294,7 +294,7 @@ CONTAINS
       TYPE(virial_type), POINTER                         :: virial
       
       ! This is a part of ninth change added by Sagnik mukhopadhyay
-      !TYPE(qs_energy_type), POINTER                      :: energy
+      TYPE(qs_energy_type), POINTER                      :: energy
       !TYPE(qs_environment_type)                          :: qs_env_mukhopadhyay
        
 
@@ -589,6 +589,8 @@ CONTAINS
       ! This is a part of ninth change added by sagnik Mukhopadhyay (9.3)
       !CALL get_qs_env(qs_env=qs_env_mukhopadhyay, energy=energy)
       !PRINT*, "Sagnik Mukhopadhyay change_9.3", energy%surf_dipole
+      CALL get_qs_env(force_env%qs_env, energy=energy)
+      PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
       
       
       CALL timestop(handle)
