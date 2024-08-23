@@ -105,8 +105,41 @@ MODULE input_cp2k_dft
    PUBLIC :: create_bsse_section
    PUBLIC :: create_interp_section
    PUBLIC :: create_mgrid_section
+   ! This a part of tenth change added by Sagnik mukhopadhyay
+   PUBLIC :: create_potentiostat_section
 
 CONTAINS
+
+! This is a part of tenth change added by Sagnik mukhopadhyay
+!***************************************************************************************************
+! adding subsection for SGM_POTENTIAL
+!***************************************************************************************************   
+SUBROUTINE create_potentiostat_section(section)
+      TYPE(section_type), POINTER                        :: section
+
+      TYPE(keyword_type), POINTER                        :: keyword
+      TYPE(section_type), POINTER                        :: subsection
+
+      CPASSERT(.NOT. ASSOCIATED(section))
+      
+      CALL section_create(section, __LOCATION__, name="potentiostat", &
+                          description="Has control over potential.") 
+                          
+      NULLIFY (keyword,subsection) 
+      CALL keyword_create(keyword, __LOCATION__, name="PHI_0", &
+                          description="Specify the initial potential", &
+                          default_r_val=0.0_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+      
+      CALL keyword_create(keyword, __LOCATION__, name="C_0", &
+                          description="Specify the initial capacitance", &
+                          default_r_val=0.0_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
+   END SUBROUTINE create_potentiostat_section
+
 
 ! **************************************************************************************************
 !> \brief creates the dft section

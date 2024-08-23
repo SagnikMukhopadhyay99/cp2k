@@ -48,6 +48,9 @@ MODULE input_cp2k_md
                                               REFTRAJ_EVAL_ENERGY_FORCES,&
                                               REFTRAJ_EVAL_NONE
    USE string_utilities,                ONLY: s2a
+   
+   ! This is a part of tenth change added by Sagnik Mukhopadhyay"
+   USE input_cp2k_dft,                  ONLY: create_potentiostat_section
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -313,6 +316,11 @@ CONTAINS
       CALL section_release(subsection)
 
       CALL create_vib_init_section(subsection)
+      CALL section_add_subsection(section, subsection)
+      CALL section_release(subsection)
+      
+      ! This is a part of tenth change added by Sagnik Mukhoppadhyay
+      CALL create_potentiostat_section(subsection)
       CALL section_add_subsection(section, subsection)
       CALL section_release(subsection)
 

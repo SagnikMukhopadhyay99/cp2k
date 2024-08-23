@@ -91,6 +91,15 @@ MODULE md_energies
     USE qs_energy_types,                ONLY: qs_energy_type
     USE qs_environment_types,           ONLY: get_qs_env,&
                                               qs_environment_type
+    USE input_keyword_types,             ONLY: keyword_create,&
+                                              keyword_release,&
+                                              keyword_type
+   USE input_section_types,             ONLY: section_add_keyword,&
+                                              section_add_subsection,&
+                                              section_create,&
+                                              section_release,&
+                                              section_type
+    USE input_cp2k_dft,                ONLY: create_potentiostat_section
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -169,6 +178,14 @@ CONTAINS
       md_ener%epot = 0.0_dp
 
    END SUBROUTINE initialize_md_ener
+   
+   
+   
+   
+   
+   
+   
+   
 
 ! **************************************************************************************************
 !> \brief ...
@@ -191,6 +208,12 @@ CONTAINS
       TYPE(force_env_type), POINTER                      :: force_env
       TYPE(particle_list_type), POINTER                  :: particles
       TYPE(simpar_type), POINTER                         :: simpar
+      
+      ! This is a part of tenth change added by Sagnik Mukhopadhyay
+      !INTEGER                                            :: PHI_0, C_0
+      REAL(KIND=DP)                                      :: PHI_0, C_0
+      !TYPE(section_vals_type), POINTER                   :: pott_section
+      !TYPE(section_type), POINTER                   ::  potentiostat_section, section
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
                particles, subsys, simpar)
@@ -216,8 +239,34 @@ CONTAINS
                                       
       ! This is part of eighth change added by Sagnik Mukhopdhyay
          PRINT*, "Sagnik Mukhopadhyay change_8.1", force_env%qs_env%total_zeff_corr
+         
+      ! This is a part of tenth change added by Sagnik Mukhopadhyay
+      
+      !IF (PRESENT(section_vals)) THEN
+      
+      
+      CALL read_potentiostat(C_0, PHI_0)
+      PRINT*, "Sagnik Mukhopadhyay change_10.1", PHI_0, C_0
+      !END IF
+      
 
    END SUBROUTINE md_energy
+   
+   
+   !************************************************************************************************
+   ! This is a part of tenth change added by Sagnik Mukhopadhyay
+   
+   SUBROUTINE read_potentiostat(C_0, PHI_0)
+   
+   TYPE(section_vals_type), POINTER                   :: section
+   real(kind=dp)                                      :: C_0, PHI_0
+   
+   ALLOCATE(section)
+
+   CALL section_vals_val_get(section, "PHI_0", r_val=PHI_0)
+   CALL section_vals_val_get(section, "C_0", r_val=C_0)
+   
+   END SUBROUTINE read_potentiostat
 
 ! **************************************************************************************************
 !> \brief ...
@@ -296,7 +345,9 @@ CONTAINS
       ! This is a part of ninth change added by Sagnik mukhopadhyay
       TYPE(qs_energy_type), POINTER                      :: energy
       !TYPE(qs_environment_type)                          :: qs_env_mukhopadhyay
-       
+      !TYPE(md_environment_type), POINTER                 :: md_env
+      !TYPE(md_ener_type), POINTER                        :: md_ener
+      
 
       NULLIFY (logger)
       logger => cp_get_default_logger()
@@ -591,6 +642,7 @@ CONTAINS
       !PRINT*, "Sagnik Mukhopadhyay change_9.3", energy%surf_dipole
       CALL get_qs_env(force_env%qs_env, energy=energy)
       PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
+      
       
       
       CALL timestop(handle)
