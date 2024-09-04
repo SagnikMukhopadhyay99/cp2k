@@ -99,7 +99,9 @@ MODULE md_energies
                                               section_create,&
                                               section_release,&
                                               section_type
-    USE input_cp2k_dft,                ONLY: create_potentiostat_section
+    !USE input_cp2k_md,                ONLY: create_potentiostat_section
+    Use potentiostat_types,            ONLY: potentiostat_type,&
+                                            create_potentiostat_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -211,8 +213,9 @@ CONTAINS
       
       ! This is a part of tenth change added by Sagnik Mukhopadhyay
       !INTEGER                                            :: PHI_0, C_0
-      REAL(KIND=DP)                                      :: PHI_0, C_0
-      !TYPE(section_vals_type), POINTER                   :: pott_section
+      !REAL(KIND=DP)                                      :: PHI_0, C_0
+      !TYPE(section_vals_type), POINTER                   :: md_section
+      !TYPE(potentiostat_type), POINTER                   :: potentiostat
       !TYPE(section_type), POINTER                   ::  potentiostat_section, section
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
@@ -245,28 +248,13 @@ CONTAINS
       !IF (PRESENT(section_vals)) THEN
       
       
-      CALL read_potentiostat(C_0, PHI_0)
-      PRINT*, "Sagnik Mukhopadhyay change_10.1", PHI_0, C_0
+      !CALL read_potentiostat(C_0, PHI_0)
+     !  CALL create_potentiostat_type(potentiostat, md_section)
+     ! PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
       !END IF
       
 
    END SUBROUTINE md_energy
-   
-   
-   !************************************************************************************************
-   ! This is a part of tenth change added by Sagnik Mukhopadhyay
-   
-   SUBROUTINE read_potentiostat(C_0, PHI_0)
-   
-   TYPE(section_vals_type), POINTER                   :: section
-   real(kind=dp)                                      :: C_0, PHI_0
-   
-   ALLOCATE(section)
-
-   CALL section_vals_val_get(section, "PHI_0", r_val=PHI_0)
-   CALL section_vals_val_get(section, "C_0", r_val=C_0)
-   
-   END SUBROUTINE read_potentiostat
 
 ! **************************************************************************************************
 !> \brief ...
@@ -638,10 +626,9 @@ CONTAINS
       CALL set_md_env(md_env, init=init)
       
       ! This is a part of ninth change added by sagnik Mukhopadhyay (9.3)
-      !CALL get_qs_env(qs_env=qs_env_mukhopadhyay, energy=energy)
-      !PRINT*, "Sagnik Mukhopadhyay change_9.3", energy%surf_dipole
+      
       CALL get_qs_env(force_env%qs_env, energy=energy)
-      PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
+      !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
       
       
       

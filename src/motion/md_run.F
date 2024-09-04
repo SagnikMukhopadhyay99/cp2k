@@ -95,6 +95,12 @@ MODULE md_run
    USE virial_types,                    ONLY: virial_type
    USE wiener_process,                  ONLY: create_wiener_process,&
                                               create_wiener_process_cv
+                                              
+  ! This is a part of change added by Sagnik Mukhopadhyay
+  USE potentiostat_types,                  ONLY: potentiostat_type,&
+                                              create_potentiostat_type
+  USE potentiostat_utils,                  ONLY: potentiostat_electron_count
+    USE qs_energy_types,                ONLY: qs_energy_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -205,12 +211,17 @@ CONTAINS
       TYPE(thermal_regions_type), POINTER                :: thermal_regions
       TYPE(thermostats_type), POINTER                    :: thermostats
       TYPE(virial_type), POINTER                         :: virial
+      
+      ! This is a part of change added by Sagnik Mukhopadhyay
+      TYPE(potentiostat_type), POINTER                   :: potentiostat
+         !TYPE(qs_energy_type), POINTER                      :: energy
+         real(kind=dp)                                   :: temp
 
       CALL timeset(routineN, handle)
       CPASSERT(ASSOCIATED(globenv))
       CPASSERT(ASSOCIATED(force_env))
 
-      NULLIFY (particles, cell, simpar, itimes, used_time, subsys, &
+      NULLIFY (potentiostat, particles, cell, simpar, itimes, used_time, subsys, &
                md_ener, thermostats, barostat, reftraj, force_env_section, &
                reftraj_section, work_section, atomic_kinds, &
                local_particles, time, fe_env, free_energy_section, &
@@ -222,6 +233,9 @@ CONTAINS
       free_energy_section => section_vals_get_subs_vals(motion_section, "FREE_ENERGY")
       constraint_section => section_vals_get_subs_vals(motion_section, "CONSTRAINT")
       CALL section_vals_val_get(global_section, "SAVE_MEM", l_val=save_mem)
+      
+        ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+      CALL potentiostat_electron_count(temp)
 
       CALL section_vals_val_get(global_section, "RUN_TYPE", i_val=run_type_id)
       IF (run_type_id == ehrenfest) CALL set_md_env(md_env, ehrenfest_md=.TRUE.)
@@ -246,6 +260,11 @@ CONTAINS
       CALL create_md_ener(md_ener)
       CALL set_md_env(md_env, md_ener=md_ener)
       NULLIFY (md_ener)
+      
+      ! This is a part of change added by Sagnik Mukhopadhyay
+      ! If requested setup potentiostat
+      CALL create_potentiostat_type(potentiostat, md_section)
+      PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
 
       ! If requested setup Thermostats
       CALL create_thermostats(thermostats, md_section, force_env, simpar, para_env, &
@@ -552,6 +571,8 @@ CONTAINS
             CALL metadyn_finalise_plumed()
          END IF
       END IF
+      
+    
 
       ! Deallocate Thermostats and Barostats
       CALL release_simpar_type(simpar)

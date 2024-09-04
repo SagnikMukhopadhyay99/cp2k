@@ -50,7 +50,7 @@ MODULE input_cp2k_md
    USE string_utilities,                ONLY: s2a
    
    ! This is a part of tenth change added by Sagnik Mukhopadhyay"
-   USE input_cp2k_dft,                  ONLY: create_potentiostat_section
+   USE input_cp2k_potentiostats,                  ONLY: create_potentiostat_section
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -60,8 +60,16 @@ MODULE input_cp2k_md
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'input_cp2k_md'
 
    PUBLIC :: create_md_section
+   
 
 CONTAINS
+
+
+! This is a part of tenth change added by Sagnik mukhopadhyay
+!***************************************************************************************************
+! adding subsection for SGM_POTENTIAL
+!***************************************************************************************************   
+
 
 ! **************************************************************************************************
 !> \brief ...

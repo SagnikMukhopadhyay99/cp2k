@@ -737,6 +737,7 @@ CONTAINS
 
       INTEGER                                            :: irep, isection, my_index
       LOGICAL                                            :: is_path, my_can_return_null
+    
 
       CPASSERT(section_vals%ref_count > 0)
 
