@@ -215,7 +215,7 @@ CONTAINS
       ! This is a part of change added by Sagnik Mukhopadhyay
       TYPE(potentiostat_type), POINTER                   :: potentiostat
          !TYPE(qs_energy_type), POINTER                      :: energy
-         real(kind=dp)                                   :: temp
+        ! real(kind=dp)                                   :: temp
 
       CALL timeset(routineN, handle)
       CPASSERT(ASSOCIATED(globenv))
@@ -234,8 +234,9 @@ CONTAINS
       constraint_section => section_vals_get_subs_vals(motion_section, "CONSTRAINT")
       CALL section_vals_val_get(global_section, "SAVE_MEM", l_val=save_mem)
       
-        ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-      CALL potentiostat_electron_count(temp)
+      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+     ! CALL potentiostat_electron_count(temp)
+      
 
       CALL section_vals_val_get(global_section, "RUN_TYPE", i_val=run_type_id)
       IF (run_type_id == ehrenfest) CALL set_md_env(md_env, ehrenfest_md=.TRUE.)
@@ -441,7 +442,7 @@ CONTAINS
          CALL virial_evaluate(atomic_kinds%els, particles%els, local_particles, &
                               virial, force_env%para_env)
 
-         CALL md_energy(md_env, md_ener)
+         CALL md_energy(md_env, md_ener, potentiostat, simpar%dt)
          CALL md_write_output(md_env) !inits the print env at itimes == 0 also writes trajectories
          md_stride = 1
       ELSE

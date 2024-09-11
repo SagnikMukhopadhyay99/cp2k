@@ -12,6 +12,9 @@
 MODULE md_ener_types
 
    USE kinds,                           ONLY: dp
+   
+   !this a part of eleventh change added by Sagnik Mukhopadhyay
+   USE potentiostat_types,             ONLY: potentiostat_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -44,6 +47,7 @@ MODULE md_ener_types
       REAL(KIND=dp), DIMENSION(:), POINTER :: ekin_shell_kind => NULL()
       REAL(KIND=dp), DIMENSION(:), POINTER :: temp_shell_kind => NULL()
       INTEGER, DIMENSION(:), POINTER       :: nfree_shell_kind => NULL()
+      
    END TYPE md_ener_type
 
 ! *** Public subroutines and data types ***

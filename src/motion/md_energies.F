@@ -102,6 +102,8 @@ MODULE md_energies
     !USE input_cp2k_md,                ONLY: create_potentiostat_section
     Use potentiostat_types,            ONLY: potentiostat_type,&
                                             create_potentiostat_type
+    USE potentiostat_utils,                  ONLY: potentiostat_electron_count
+    
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -197,7 +199,7 @@ CONTAINS
 !>   - 10-2007 created
 !> \author MI
 ! **************************************************************************************************
-   SUBROUTINE md_energy(md_env, md_ener)
+   SUBROUTINE md_energy(md_env, md_ener, potentiostat, dt)
 
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(md_ener_type), POINTER                        :: md_ener
@@ -217,9 +219,14 @@ CONTAINS
       !TYPE(section_vals_type), POINTER                   :: md_section
       !TYPE(potentiostat_type), POINTER                   :: potentiostat
       !TYPE(section_type), POINTER                   ::  potentiostat_section, section
+     TYPE(qs_energy_type), POINTER                      :: energy
+      real(kind=dp)                                   :: temp
+     ! TYPE(section_vals_type), POINTER                   :: md_section
+   TYPE(potentiostat_type), POINTER, OPTIONAL                   :: potentiostat
+   REAL(kind=dp), OPTIONAL                                      :: dt
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
-               particles, subsys, simpar)
+               particles, subsys, simpar, energy)
       CALL get_md_env(md_env=md_env, force_env=force_env, &
                       simpar=simpar)
 
@@ -252,7 +259,18 @@ CONTAINS
      !  CALL create_potentiostat_type(potentiostat, md_section)
      ! PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
       !END IF
+      !CALL create_potentiostat_type(potentiostat, md_section)
+      CALL get_qs_env(force_env%qs_env, energy=energy)
+    !  PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
+      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+      !PRINT*, energy%surf
       
+      IF (PRESENT(potentiostat)) then
+      IF (PRESENT(dt)) then
+  CALL potentiostat_electron_count(temp, energy%surf_dipole,md_ener%temp_part,& 
+             force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, dt)
+    END IF
+    END IF
 
    END SUBROUTINE md_energy
 
@@ -331,7 +349,7 @@ CONTAINS
       TYPE(virial_type), POINTER                         :: virial
       
       ! This is a part of ninth change added by Sagnik mukhopadhyay
-      TYPE(qs_energy_type), POINTER                      :: energy
+      !TYPE(qs_energy_type), POINTER                      :: energy
       !TYPE(qs_environment_type)                          :: qs_env_mukhopadhyay
       !TYPE(md_environment_type), POINTER                 :: md_env
       !TYPE(md_ener_type), POINTER                        :: md_ener
@@ -627,7 +645,7 @@ CONTAINS
       
       ! This is a part of ninth change added by sagnik Mukhopadhyay (9.3)
       
-      CALL get_qs_env(force_env%qs_env, energy=energy)
+      !CALL get_qs_env(force_env%qs_env, energy=energy)
       !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
       
       
