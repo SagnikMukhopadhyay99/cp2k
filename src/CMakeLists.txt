@@ -246,6 +246,7 @@ list(
   input_cp2k_colvar.F
   input_cp2k_constraints.F
   input_cp2k_dft.F
+  input_cp2k_harris.F
   input_cp2k_print_dft.F
   input_cp2k_scf.F
   input_cp2k_as.F
@@ -530,10 +531,13 @@ list(
   qs_diis.F
   qs_diis_types.F
   qs_dispersion_nonloc.F
+  qs_dispersion_d2.F
+  qs_dispersion_d3.F
   qs_dispersion_d4.F
   qs_dispersion_pairpot.F
   qs_dispersion_types.F
   qs_dispersion_utils.F
+  qs_dispersion_cnum.F
   qs_dos.F
   qs_efield_berry.F
   qs_efield_local.F
@@ -575,6 +579,8 @@ list(
   qs_gcp_utils.F
   qs_grid_atom.F
   qs_gspace_mixing.F
+  qs_harris_types.F
+  qs_harris_utils.F
   qs_harmonics_atom.F
   qs_hash_table_functions.F
   qs_initial_guess.F

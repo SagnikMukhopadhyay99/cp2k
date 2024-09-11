@@ -18,8 +18,11 @@ T = TypeVar("T")
 CP2K_DIR = pathlib.Path(__file__).resolve().parents[2]
 
 FLAG_EXCEPTIONS = (
-    r"\$\{.*\}\$",
-    r"__.*__",
+    r"\$\{..*\}\$",
+    r"__..*__",
+    r"_M_..*",
+    r"__ARM_ARCH",
+    r"__ARM_FEATURE_..*",
     r"CUDA_VERSION",
     r"DBM_LIBXSMM_PREFETCH",
     r"DBM_VALIDATE_AGAINST_DBCSR",
@@ -42,6 +45,7 @@ FLAG_EXCEPTIONS = (
     r"__DATA_DIR",
     r"__FFTW3_UNALIGNED",
     r"__FORCE_USE_FAST_MATH",
+    r"__INTEL_LLVM_COMPILER",
     r"__INTEL_COMPILER",
     r"OFFLOAD_CHECK",
     r"__OFFLOAD_CUDA",
@@ -60,6 +64,7 @@ FLAG_EXCEPTIONS = (
     r"LIBXSMM_VERSION2",
     r"LIBXSMM_VERSION3",
     r"LIBXSMM_VERSION4",
+    r"CPVERSION",
 )
 
 FLAG_EXCEPTIONS_RE = re.compile(r"|".join(FLAG_EXCEPTIONS))

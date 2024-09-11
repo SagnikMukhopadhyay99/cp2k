@@ -77,13 +77,16 @@ case "${with_libtorch}" in
 esac
 
 if [ "$with_libtorch" != "__DONTUSE__" ]; then
+  cat << EOF > "${BUILDDIR}/setup_libtorch"
+export LIBTORCH_VER="${libtorch_ver}"
+EOF
   if [ "$with_libtorch" != "__SYSTEM__" ]; then
-    cat << EOF > "${BUILDDIR}/setup_libtorch"
+    cat << EOF >> "${BUILDDIR}/setup_libtorch"
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
+prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
   fi
   if [ "$ENABLE_CUDA" = "__TRUE__" ]; then
@@ -91,7 +94,7 @@ EOF
 export CP_DFLAGS="\${CP_DFLAGS} -D__LIBTORCH"
 export CXXFLAGS="\${CXXFLAGS} ${LIBTORCH_CXXFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${LIBTORCH_LDFLAGS}"
-export CP_LIBS="\${CP_LIBS} -lc10 -lc10_cuda -ltorch_cpu -ltorch_cuda -ltorch"
+export CP_LIBS="\${CP_LIBS} -lc10 -ltorch_cpu -ltorch"
 EOF
     cat "${BUILDDIR}/setup_libtorch" >> "${SETUPFILE}"
   else

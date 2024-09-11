@@ -27,8 +27,7 @@ def main() -> None:
             f.write(toolchain_full(target_cpu="generic") + regtest(version))
 
     with OutputFile(f"Dockerfile.test_openmpi-psmp", args.check) as f:
-        # Also testing --with-gcc=install here, see github.com/cp2k/cp2k/issues/2062 .
-        f.write(toolchain_full(mpi_mode="openmpi", with_gcc="install"))
+        f.write(toolchain_full(mpi_mode="openmpi"))
         f.write(regtest("psmp"))
 
     with OutputFile(f"Dockerfile.test_fedora-psmp", args.check) as f:
@@ -57,7 +56,7 @@ def main() -> None:
         with OutputFile(f"Dockerfile.test_coverage-{version}", args.check) as f:
             f.write(toolchain_full() + coverage(version))
 
-    for gcc_version in 8, 9, 10, 11, 12, 13:
+    for gcc_version in 8, 9, 10, 11, 12, 13, 14:
         with OutputFile(f"Dockerfile.test_gcc{gcc_version}", args.check) as f:
             if gcc_version > 8:
                 f.write(toolchain_ubuntu_nompi(gcc_version=gcc_version))
@@ -79,7 +78,6 @@ def main() -> None:
         f.write(
             toolchain_full(
                 base_image="arm64v8/ubuntu:24.04",
-                with_libxsmm="no",
                 with_libtorch="no",
                 with_deepmd="no",
             )
@@ -427,7 +425,16 @@ def toolchain_ubuntu_nompi(
     assert gcc_version > 8
     output = rf"""
 FROM {base_image}
+"""
 
+    if gcc_version > 13:
+        output += rf"""
+# Add Ubuntu universe repository.
+RUN apt-get update -qq && apt-get install -qq --no-install-recommends software-properties-common
+RUN add-apt-repository universe
+"""
+
+    output += rf"""
 # Install Ubuntu packages.
 RUN export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true && \
     apt-get update -qq && apt-get install -qq --no-install-recommends \
@@ -508,7 +515,7 @@ RUN ln -sf /usr/bin/gcc-{gcc_version}      /usr/local/bin/gcc  && \
 # ======================================================================================
 def toolchain_intel() -> str:
     return rf"""
-FROM intel/hpckit:2024.2.0-1-devel-ubuntu22.04
+FROM intel/hpckit:2024.2.1-0-devel-ubuntu22.04
 
 """ + install_toolchain(
         base_image="ubuntu",
@@ -835,7 +842,7 @@ RUN apt-get update -qq && apt-get install -qq --no-install-recommends \
 WORKDIR /opt/spack
 RUN git init --quiet && \
     git remote add origin https://github.com/spack/spack.git && \
-    git fetch --quiet --depth 1 origin tag develop-2024-05-26 --no-tags && \
+    git fetch --quiet --depth 1 origin 22e40541c75ae952c0afb1011082f3220e3ae2a9 --no-tags && \
     git checkout --quiet FETCH_HEAD
 ENV PATH="/opt/spack/bin:${{PATH}}"
 

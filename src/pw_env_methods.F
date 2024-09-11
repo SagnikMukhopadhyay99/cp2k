@@ -43,6 +43,7 @@ MODULE pw_env_methods
                                               derivative_cd5,&
                                               derivative_cd7,&
                                               rho_dependent
+   USE fft_tools,                       ONLY: init_fft_scratch_pool
    USE gaussian_gridlevels,             ONLY: destroy_gaussian_gridlevel,&
                                               gaussian_gridlevel,&
                                               init_gaussian_gridlevel
@@ -114,7 +115,9 @@ MODULE pw_env_methods
    CHARACTER(len=*), PARAMETER, PRIVATE :: moduleN = 'pw_env_methods'
 
    PUBLIC :: pw_env_create, pw_env_rebuild
-!***
+
+! **************************************************************************************************
+
 CONTAINS
 
 ! **************************************************************************************************
@@ -248,6 +251,9 @@ CONTAINS
          DEALLOCATE (pw_env%cube_info)
       END IF
       NULLIFY (pw_env%pw_pools, pw_env%cube_info)
+
+      ! remove fft scratch pool, as it depends on pw_env mpi group handles
+      CALL init_fft_scratch_pool()
 
       !
       !
@@ -774,8 +780,8 @@ CONTAINS
       CHARACTER(len=*), PARAMETER :: routineN = 'compute_max_radius'
       CHARACTER(LEN=8), DIMENSION(4), PARAMETER :: &
          pbas = (/"ORB     ", "AUX_FIT ", "MAO     ", "HARRIS  "/)
-      CHARACTER(LEN=8), DIMENSION(8), PARAMETER :: sbas = (/"ORB     ", "AUX     ", "RI_AUX  ", &
-         "MAO     ", "HARRIS  ", "RI_HXC  ", "RI_K    ", "LRI_AUX "/)
+      CHARACTER(LEN=8), DIMENSION(9), PARAMETER :: sbas = (/"ORB     ", "AUX     ", "RI_AUX  ", &
+         "MAO     ", "HARRIS  ", "RI_HXC  ", "RI_K    ", "LRI_AUX ", "RHOIN   "/)
       REAL(KIND=dp), PARAMETER                           :: safety_factor = 1.015_dp
 
       INTEGER :: handle, ibasis_set_type, igrid_level, igrid_zet0_s, ikind, ipgf, iset, ishell, &
@@ -1057,7 +1063,6 @@ CONTAINS
                                      border_points=border_points)
       ALLOCATE (diel_rs_grid)
       CALL rs_grid_create(diel_rs_grid, rs_desc)
-!   CALL rs_grid_print(diel_rs_grid,6)
       CALL rs_grid_release_descriptor(rs_desc)
 
       CALL timestop(handle)

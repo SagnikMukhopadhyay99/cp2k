@@ -6,8 +6,8 @@
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-gsl_ver="2.7"
-gls_sha256="efbbf3785da0e53038be7907500628b466152dbc3c173a87de1b5eba2e23602b"
+gsl_ver="2.8"
+gls_sha256="6a99eeed15632c6354895b1dd542ed5a855c0f15d9ad1326c6fe2b2c9e423190"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -81,25 +81,17 @@ export GSL_LIBRARY="-lgsl"
 EOF
   fi
   cat << EOF >> "${BUILDDIR}/setup_gsl"
+export GSL_VER="${gsl_ver}"
 export GSL_CFLAGS="${GSL_CFLAGS}"
 export GSL_LDFLAGS="${GSL_LDFLAGS}"
 export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__GSL|)"
 export CP_CFLAGS="\${CP_CFLAGS} ${GSL_CFLAGS}"
 export CP_LDFLAGS="\${CP_LDFLAGS} ${GSL_LDFLAGS}"
 export GSL_LIBRARY="-lgsl"
-export GSL_ROOT="$pkg_install_dir"
+export GSL_ROOT="${pkg_install_dir}"
 export GSL_INCLUDE_DIR="$pkg_install_dir/include"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib64/pkgconfig"
-prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
-
-##########################################################
-#
-# I only include the library when SIRIUS is activated
-# which depends explicitly on MPI
-#
-##########################################################
-
-
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib64/pkgconfig"
+prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 export CP_LIBS="IF_MPI(${GSL_LIBS}|) \${CP_LIBS}"
 EOF
   cat "${BUILDDIR}/setup_gsl" >> $SETUPFILE
