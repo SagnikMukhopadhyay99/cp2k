@@ -104,6 +104,7 @@ MODULE md_energies
                                             create_potentiostat_type
     USE potentiostat_utils,                  ONLY: potentiostat_electron_count
     
+    
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -199,7 +200,7 @@ CONTAINS
 !>   - 10-2007 created
 !> \author MI
 ! **************************************************************************************************
-   SUBROUTINE md_energy(md_env, md_ener, potentiostat, dt)
+   SUBROUTINE md_energy(md_env, md_ener, potentiostat)
 
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(md_ener_type), POINTER                        :: md_ener
@@ -216,14 +217,15 @@ CONTAINS
       ! This is a part of tenth change added by Sagnik Mukhopadhyay
       !INTEGER                                            :: PHI_0, C_0
       !REAL(KIND=DP)                                      :: PHI_0, C_0
-      !TYPE(section_vals_type), POINTER                   :: md_section
+     ! TYPE(section_vals_type), POINTER                   :: md_section, motion_section
+     ! TYPE(simpar_type), POINTER                         :: simpar_1
       !TYPE(potentiostat_type), POINTER                   :: potentiostat
       !TYPE(section_type), POINTER                   ::  potentiostat_section, section
      TYPE(qs_energy_type), POINTER                      :: energy
-      real(kind=dp)                                   :: temp
+      !real(kind=dp)                                   :: temp
      ! TYPE(section_vals_type), POINTER                   :: md_section
    TYPE(potentiostat_type), POINTER, OPTIONAL                   :: potentiostat
-   REAL(kind=dp), OPTIONAL                                      :: dt
+   !REAL(kind=dp)                                      :: dt
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
                particles, subsys, simpar, energy)
@@ -260,16 +262,20 @@ CONTAINS
      ! PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
       !END IF
       !CALL create_potentiostat_type(potentiostat, md_section)
+      !CALL read_md_low(simpar_1, motion_section, md_section)
       CALL get_qs_env(force_env%qs_env, energy=energy)
+      !PRINT*, "Sagnik Mukhopadhyay change_11.9", simpar%dt
+      !CALL section_vals_val_get(md_section, "TIMESTEP", r_val=dt)
+      !print*, "Sagnik Mukhopadhyay change_11.11", 
     !  PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
       ! This is a part of eleventh change added by Sagnik Mukhopadhyay
       !PRINT*, energy%surf
       
       IF (PRESENT(potentiostat)) then
-      IF (PRESENT(dt)) then
-  CALL potentiostat_electron_count(temp, energy%surf_dipole,md_ener%temp_part,& 
-             force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, dt)
-    END IF
+      !IF (PRESENT(dt)) then
+  CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
+             force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, simpar%dt)
+   ! END IF
     END IF
 
    END SUBROUTINE md_energy
@@ -373,6 +379,8 @@ CONTAINS
                       simpar=simpar, force_env=force_env, init=init, md_ener=md_ener, &
                       reftraj=reftraj, thermostats=thermostats, barostat=barostat, &
                       para_env=para_env, averages=averages, thermal_regions=thermal_regions)
+                      
+      
 
       root_section => force_env%root_section
       motion_section => section_vals_get_subs_vals(root_section, "MOTION")
@@ -647,7 +655,7 @@ CONTAINS
       
       !CALL get_qs_env(force_env%qs_env, energy=energy)
       !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
-      
+      !Print*, "Sagnik Mukhopadhyay change_11.10", itimes, time, time/itimes
       
       
       CALL timestop(handle)

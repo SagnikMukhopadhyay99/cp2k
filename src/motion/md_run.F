@@ -442,7 +442,7 @@ CONTAINS
          CALL virial_evaluate(atomic_kinds%els, particles%els, local_particles, &
                               virial, force_env%para_env)
 
-         CALL md_energy(md_env, md_ener, potentiostat, simpar%dt)
+         CALL md_energy(md_env, md_ener, potentiostat)
          CALL md_write_output(md_env) !inits the print env at itimes == 0 also writes trajectories
          md_stride = 1
       ELSE
