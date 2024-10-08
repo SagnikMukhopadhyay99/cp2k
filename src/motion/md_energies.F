@@ -200,7 +200,7 @@ CONTAINS
 !>   - 10-2007 created
 !> \author MI
 ! **************************************************************************************************
-   SUBROUTINE md_energy(md_env, md_ener, potentiostat)
+   SUBROUTINE md_energy(md_env, md_ener)
 
       TYPE(md_environment_type), POINTER                 :: md_env
       TYPE(md_ener_type), POINTER                        :: md_ener
@@ -224,13 +224,13 @@ CONTAINS
      TYPE(qs_energy_type), POINTER                      :: energy
       !real(kind=dp)                                   :: temp
      ! TYPE(section_vals_type), POINTER                   :: md_section
-   TYPE(potentiostat_type), POINTER, OPTIONAL                   :: potentiostat
+   TYPE(potentiostat_type), POINTER                   :: potentiostat
    !REAL(kind=dp)                                      :: dt
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
-               particles, subsys, simpar, energy)
+               particles, subsys, simpar, energy, potentiostat)
       CALL get_md_env(md_env=md_env, force_env=force_env, &
-                      simpar=simpar)
+                      simpar=simpar, potentiostat=potentiostat)
 
       CALL force_env_get(force_env, &
                          potential_energy=md_ener%epot, subsys=subsys)
@@ -271,12 +271,13 @@ CONTAINS
       ! This is a part of eleventh change added by Sagnik Mukhopadhyay
       !PRINT*, energy%surf
       
-      IF (PRESENT(potentiostat)) then
+     ! IF (PRESENT(potentiostat)) then
       !IF (PRESENT(dt)) then
   CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
              force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, simpar%dt)
    ! END IF
-    END IF
+  !  END IF
+    PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, potentiostat%C_0
 
    END SUBROUTINE md_energy
 

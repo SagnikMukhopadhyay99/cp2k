@@ -24,10 +24,15 @@ SUBROUTINE potentiostat_electron_count(dipole_pott, temp_part, z_eff, C_0, PHI_0
    !TYPE(qs_energy_type), POINTER                      :: qs_energy
    !TYPE(section_vals_type), POINTER                   :: md_section
    !TYPE(potentiostat_type), POINTER                   :: potentiostat
-   real(kind=dp)                                      ::  dipole_pott , n_electron=0, N, R, k_B
-   REAL(kind=dp)                                       :: temp_part, z_eff, C_0, PHI_0, dt
+   real(kind=dp)                                      ::  dipole_pott , n_electron, N, R, k_B
+   REAL(kind=dp)                                       :: temp_part, dt
+   REAL(kind=dp)                                      ::  C_0, PHI_0
+   REAL(KIND=dp), INTENT(INOUT)                       :: z_eff
    !NULLIFY (qs_energy, force_env)
    
+   !NULLIFY(potentiostat)
+   !PHI_0 = potentiostat%PHI_0
+   !C_0 = potentiostat%C_0
    !CPASSERT(ASSOCIATED(force_env%qs_env))
    R=3.166580774_dp* 1.0E-4
    k_B=3.1668114_dp* 1.0E-6
@@ -44,7 +49,9 @@ SUBROUTINE potentiostat_electron_count(dipole_pott, temp_part, z_eff, C_0, PHI_0
       n_electron = n_electron - C_0*(dipole_pott-PHI_0)*(1-exp(-dt/(R*C_0)))
       n_electron = n_electron + N*sqrt(k_B*temp_part*C_0*(1-exp(-2*dt/(R*C_0))))
       
-      !z_eff=n_electron
+      z_eff=n_electron
+      
+      !z_eff= z_eff *100
                       
       PRINT*, "Sagnik Mukhopadhyay change_11.4" ,dipole_pott
       PRINT*, "Sagnik Mukhopadhyay change_11.5", temp_part

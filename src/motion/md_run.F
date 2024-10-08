@@ -285,7 +285,8 @@ CONTAINS
                                              pos=my_pos, act=my_act)
       END IF
 
-      CALL set_md_env(md_env, thermostats=thermostats, barostat=barostat, thermal_regions=thermal_regions)
+      CALL set_md_env(md_env, thermostats=thermostats, barostat=barostat, thermal_regions=thermal_regions,&
+                                                                        potentiostat=potentiostat)
 
       CALL get_md_env(md_env, ehrenfest_md=ehrenfest_md)
 
@@ -442,7 +443,7 @@ CONTAINS
          CALL virial_evaluate(atomic_kinds%els, particles%els, local_particles, &
                               virial, force_env%para_env)
 
-         CALL md_energy(md_env, md_ener, potentiostat)
+         CALL md_energy(md_env, md_ener)
          CALL md_write_output(md_env) !inits the print env at itimes == 0 also writes trajectories
          md_stride = 1
       ELSE

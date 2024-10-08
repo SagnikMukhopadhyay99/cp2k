@@ -43,6 +43,9 @@ MODULE md_environment_types
    USE thermostat_types,                ONLY: release_thermostats,&
                                               thermostat_type,&
                                               thermostats_type
+  ! This is part of eleventh change added by Sagnik Mukhopadhyay
+  USE potentiostat_types,               ONLY: potentiostat_type,&
+                                              release_potentiostat_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -70,6 +73,10 @@ MODULE md_environment_types
       TYPE(simpar_type), POINTER                 :: simpar => NULL()
       TYPE(average_quantities_type), POINTER     :: averages => NULL()
       TYPE(thermal_regions_type), POINTER        :: thermal_regions => NULL()
+      
+      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+      TYPE(potentiostat_type), POINTER           :: potentiostat => NULL()
+      
    END TYPE md_environment_type
 
    ! *** Public subroutines and data types ***
@@ -155,6 +162,9 @@ CONTAINS
          CALL release_thermal_regions(md_env%thermal_regions)
          DEALLOCATE (md_env%thermal_regions)
       END IF
+      
+      !this is a part of eleventh change added by Sagnik Mukhopadhyay
+      CALL release_potentiostat_type(md_env%potentiostat)
 
    END SUBROUTINE md_env_release
 
@@ -191,7 +201,7 @@ CONTAINS
                          force_env, para_env, reftraj, t, init, first_time, fe_env, thermostats, barostat, &
                          thermostat_coeff, thermostat_part, thermostat_shell, thermostat_baro, &
                          thermostat_fast, thermostat_slow, md_ener, averages, &
-                         thermal_regions, ehrenfest_md)
+                         thermal_regions, ehrenfest_md, potentiostat)
 
       TYPE(md_environment_type), INTENT(IN)              :: md_env
       INTEGER, OPTIONAL, POINTER                         :: itimes
@@ -214,6 +224,9 @@ CONTAINS
       TYPE(average_quantities_type), OPTIONAL, POINTER   :: averages
       TYPE(thermal_regions_type), OPTIONAL, POINTER      :: thermal_regions
       LOGICAL, OPTIONAL                                  :: ehrenfest_md
+      
+      ! this is a part of eleventh change added by Sagnik Mukhopadhyay
+      TYPE(potentiostat_type), OPTIONAL, POINTER         :: potentiostat
 
       IF (PRESENT(itimes)) itimes => md_env%itimes
       IF (PRESENT(fe_env)) fe_env => md_env%fe_env
@@ -262,6 +275,9 @@ CONTAINS
       IF (PRESENT(first_time)) first_time = md_env%first_time
       IF (PRESENT(ehrenfest_md)) ehrenfest_md = md_env%ehrenfest_md
       IF (PRESENT(thermal_regions)) thermal_regions => md_env%thermal_regions
+      
+      ! this is a part of eleventh change added by Sagnik Mukhopadhyay
+      IF (PRESENT(potentiostat)) potentiostat => md_env%potentiostat
 
    END SUBROUTINE get_md_env
 
@@ -287,7 +303,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE set_md_env(md_env, itimes, constant, cell, simpar, fe_env, force_env, &
                          para_env, init, first_time, thermostats, barostat, reftraj, md_ener, averages, &
-                         thermal_regions, ehrenfest_md)
+                         thermal_regions, ehrenfest_md, potentiostat)
 
       TYPE(md_environment_type), INTENT(INOUT)           :: md_env
       INTEGER, OPTIONAL, POINTER                         :: itimes
@@ -305,6 +321,9 @@ CONTAINS
       TYPE(average_quantities_type), OPTIONAL, POINTER   :: averages
       TYPE(thermal_regions_type), OPTIONAL, POINTER      :: thermal_regions
       LOGICAL, OPTIONAL                                  :: ehrenfest_md
+      
+      ! this is a part of eleventh change added by Sagnik Mukhopadhyay
+      TYPE(potentiostat_type), OPTIONAL, POINTER         :: potentiostat
 
       IF (PRESENT(init)) md_env%init = init
       IF (PRESENT(first_time)) md_env%first_time = first_time
@@ -372,6 +391,16 @@ CONTAINS
             END IF
          END IF
          md_env%thermal_regions => thermal_regions
+      END IF
+      
+      ! this is a part of eleventh change added by Sagnik Mukhopadhyay
+      IF (PRESENT(potentiostat)) THEN
+         IF (ASSOCIATED(md_env%potentiostat)) THEN
+         IF (.NOT. ASSOCIATED(md_env%potentiostat, potentiostat)) THEN
+            CALL release_potentiostat_type(md_env%potentiostat)
+         END IF
+         END IF
+         md_env%potentiostat => potentiostat
       END IF
 
    END SUBROUTINE set_md_env
