@@ -67,6 +67,7 @@ MODULE cp_control_utils
    USE pair_potential_types,            ONLY: pair_potential_reallocate
    USE periodic_table,                  ONLY: get_ptable_info
    USE qs_cdft_utils,                   ONLY: read_cdft_control_section
+   USE smeagol_control_types,           ONLY: read_smeagol_control
    USE string_utilities,                ONLY: uppercase
    USE util,                            ONLY: sort
    USE xc,                              ONLY: xc_uses_kinetic_energy_density,&
@@ -613,6 +614,10 @@ CONTAINS
       ! Read the external vxc input section
       tmp_section => section_vals_get_subs_vals(dft_section, "EXTERNAL_VXC")
       CALL section_vals_get(tmp_section, explicit=dft_control%apply_external_vxc)
+
+      ! SMEAGOL interface
+      tmp_section => section_vals_get_subs_vals(dft_section, "SMEAGOL")
+      CALL read_smeagol_control(dft_control%smeagol_control, tmp_section)
 
    END SUBROUTINE read_dft_control
 
@@ -2425,6 +2430,10 @@ CONTAINS
                                 i_val=dft_control%rtp_control%aspc_order)
       CALL section_vals_val_get(rtp_section, "EXP_ACCURACY", &
                                 r_val=dft_control%rtp_control%eps_exp)
+      CALL section_vals_val_get(rtp_section, "RTP_METHOD", &
+                                i_val=dft_control%rtp_control%rtp_method)
+      CALL section_vals_val_get(rtp_section, "RTBSE_HAMILTONIAN", &
+                                i_val=dft_control%rtp_control%rtbse_ham)
       CALL section_vals_val_get(rtp_section, "PROPAGATOR", &
                                 i_val=dft_control%rtp_control%propagator)
       CALL section_vals_val_get(rtp_section, "EPS_ITER", &

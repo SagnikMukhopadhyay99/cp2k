@@ -23,8 +23,6 @@ MODULE cp2k_runs
                                               dbcsr_print_config,&
                                               dbcsr_print_statistics
    USE cp_dbcsr_cp2k_link,              ONLY: cp_dbcsr_config
-   USE cp_dlaf_utils_api,               ONLY: cp_dlaf_finalize,&
-                                              cp_dlaf_initialize
    USE cp_files,                        ONLY: close_file,&
                                               open_file
    USE cp_log_handling,                 ONLY: cp_get_default_logger,&
@@ -80,7 +78,7 @@ MODULE cp2k_runs
         do_sirius, do_swarm, do_tamc, do_test, do_tree_mc, do_tree_mc_ana, driver_run, ehrenfest, &
         electronic_spectra_run, energy_force_run, energy_run, geo_opt_run, linear_response_run, &
         mol_dyn_run, mon_car_run, negf_run, none_run, pint_run, real_time_propagation, &
-        tree_mc_run, vib_anal
+        rtp_method_bse, tree_mc_run, vib_anal
    USE input_cp2k,                      ONLY: create_cp2k_root_section
    USE input_cp2k_check,                ONLY: check_cp2k_input
    USE input_cp2k_global,               ONLY: create_global_section
@@ -119,17 +117,12 @@ MODULE cp2k_runs
    USE optimize_basis,                  ONLY: run_optimize_basis
    USE optimize_input,                  ONLY: run_optimize_input
    USE pint_methods,                    ONLY: do_pint_run
-   USE pw_fpga,                         ONLY: pw_fpga_finalize,&
-                                              pw_fpga_init
-   USE pw_gpu,                          ONLY: pw_gpu_finalize,&
-                                              pw_gpu_init
    USE qs_environment_types,            ONLY: get_qs_env
    USE qs_linres_module,                ONLY: linres_calculation
    USE qs_tddfpt_module,                ONLY: tddfpt_calculation
    USE reference_manager,               ONLY: export_references_as_xml
+   USE rt_bse,                          ONLY: run_propagation_bse
    USE rt_propagation,                  ONLY: rt_prop_setup
-   USE sirius_interface,                ONLY: cp_sirius_finalize,&
-                                              cp_sirius_init
    USE swarm,                           ONLY: run_swarm
    USE tamc_run,                        ONLY: qs_tamc
    USE tmc_setup,                       ONLY: do_analyze_files,&
@@ -182,6 +175,10 @@ CONTAINS
       INTEGER                                            :: f_env_handle, grid_backend, ierr, &
                                                             iter_level, method_name_id, &
                                                             new_env_id, prog_name_id, run_type_id
+#if defined(__DBCSR_ACC)
+      INTEGER, TARGET                                    :: offload_chosen_device
+#endif
+      INTEGER, POINTER                                   :: active_device_id
       INTEGER(KIND=int_8)                                :: m_memory_max_mpi
       LOGICAL                                            :: echo_input, grid_apply_cutoff, &
                                                             grid_validate, I_was_ionode
@@ -193,25 +190,18 @@ CONTAINS
       TYPE(global_environment_type), POINTER             :: globenv
       TYPE(section_vals_type), POINTER                   :: glob_section, input_file, root_section
 
-      NULLIFY (para_env, f_env, dft_control)
+      NULLIFY (para_env, f_env, dft_control, active_device_id)
       ALLOCATE (para_env)
       para_env = mpi_comm
 
 #if defined(__DBCSR_ACC)
       IF (offload_get_device_count() > 0) THEN
-         CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit, &
-                             accdrv_active_device_id=offload_get_chosen_device())
-      ELSE
-         CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit)
+         offload_chosen_device = offload_get_chosen_device()
+         active_device_id => offload_chosen_device
       END IF
-#else
-      CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit)
 #endif
-
-      CALL pw_gpu_init()
-      CALL pw_fpga_init()
-
-      CALL cp_dlaf_initialize()
+      CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit, &
+                          accdrv_active_device_id=active_device_id)
 
       NULLIFY (globenv, force_env)
 
@@ -273,37 +263,15 @@ CONTAINS
          CALL run_optimize_input(input_declaration, root_section, para_env)
       CASE (do_swarm)
          CALL run_swarm(input_declaration, root_section, para_env, globenv, input_file_name)
-      CASE (do_farming)
-         ! Hack: DBCSR should be uninitialized when entering farming.
-         ! But, we don't want to change the public f77_interface.
-         ! TODO: refactor cp2k's startup code
+      CASE (do_farming) ! TODO: refactor cp2k's startup code
          CALL dbcsr_finalize_lib()
-         IF (method_name_id == do_sirius) CALL cp_sirius_finalize()
-
-         CALL cp_dlaf_finalize()
-
-         CALL pw_gpu_finalize()
-         CALL pw_fpga_finalize()
          CALL farming_run(input_declaration, root_section, para_env, initial_variables)
-#if defined(__DBCSR_ACC)
-         IF (offload_get_device_count() > 0) THEN
-            CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit, &
-                                accdrv_active_device_id=offload_get_chosen_device())
-         ELSE
-            CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit)
-         END IF
-#else
-         CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit)
-#endif
-
-         CALL pw_gpu_init()
-         CALL pw_fpga_init()
-         IF (method_name_id == do_sirius) CALL cp_sirius_init()
+         CALL dbcsr_init_lib(mpi_comm%get_handle(), io_unit=output_unit, &
+                             accdrv_active_device_id=active_device_id)
       CASE (do_opt_basis)
          CALL run_optimize_basis(input_declaration, root_section, para_env)
          globenv%run_type_id = none_run
       CASE (do_cp2k)
-         IF (method_name_id == do_sirius) CALL cp_sirius_init()
          CALL create_force_env(new_env_id, &
                                input_declaration=input_declaration, &
                                input_path=input_file_name, &
@@ -383,7 +351,14 @@ CONTAINS
             CPABORT("Real time propagation needs METHOD QS. ")
          CALL get_qs_env(force_env%qs_env, dft_control=dft_control)
          dft_control%rtp_control%fixed_ions = .TRUE.
-         CALL rt_prop_setup(force_env)
+         SELECT CASE (dft_control%rtp_control%rtp_method)
+         CASE (rtp_method_bse)
+            ! Run the TD-BSE method
+            CALL run_propagation_bse(force_env%qs_env, force_env)
+         CASE default
+            ! Run the TDDFT method
+            CALL rt_prop_setup(force_env)
+         END SELECT
       CASE (ehrenfest)
          IF (method_name_id /= do_qs) &
             CPABORT("Ehrenfest dynamics needs METHOD QS ")
@@ -419,15 +394,7 @@ CONTAINS
       !sample peak memory
       CALL m_memory()
 
-      IF (method_name_id == do_sirius) CALL cp_sirius_finalize()
-
-      CALL pw_gpu_finalize()
-      CALL pw_fpga_finalize()
-
-      CALL cp_dlaf_finalize()
-
       CALL dbcsr_print_statistics()
-
       CALL dbm_library_print_stats(mpi_comm=mpi_comm, output_unit=output_unit)
       CALL grid_library_print_stats(mpi_comm=mpi_comm, output_unit=output_unit)
 

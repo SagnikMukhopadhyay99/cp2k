@@ -130,6 +130,7 @@ MODULE mp2_types
                                                             do_admm = .FALSE., &
                                                             do_rse = .FALSE., &
                                                             print_dgemm_info = .FALSE.
+
       ! GCC 8 has an issue with this being an ALLOCATABLE
       TYPE(dbcsr_type), DIMENSION(:), POINTER            :: mo_coeff_o => NULL(), &
                                                             mo_coeff_v => NULL()
@@ -140,6 +141,11 @@ MODULE mp2_types
                                                             rse_corr_diag = 0.0_dp, &
                                                             rse_corr = 0.0_dp, &
                                                             scale_rpa = 0.0_dp
+
+      !LOGICAL                                            :: do_sigma = .FALSE.
+      INTEGER                                            :: sigma_param = 0.0_dp
+      REAL(KIND=dp)                                      :: e_sigma_corr = 0.0_dp
+
    END TYPE ri_rpa_type
 
    TYPE ri_rpa_im_time_type
@@ -329,7 +335,7 @@ MODULE mp2_types
       TYPE(ri_mp2_type)                                  :: ri_mp2 = ri_mp2_type()
       TYPE(ri_rpa_type)                                  :: ri_rpa = ri_rpa_type()
       ! There is a bug with some older compilers preventing requiring an explicit initialization of allocatable components
-#if __GNUC__ < 9 || (__GNUC__ == 9 && __GNUC_MINOR__ < 5)
+#if defined(FTN_NO_DEFAULT_INIT)
       TYPE(ri_rpa_im_time_type)                          :: ri_rpa_im_time = ri_rpa_im_time_type(Eigenval_Gamma=NULL(), &
                                                                                                  wkp_V=NULL(), &
                                                                                                  starts_array_mc_RI=NULL(), &
