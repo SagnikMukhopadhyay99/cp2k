@@ -619,6 +619,10 @@ CONTAINS
          ELSE
             core_charge = 0.0_dp
          END IF
+         
+         ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+      PRINT*, "Sagnik Mukhopadhyay change_11.16 zeff_core_charge=", core_charge
+      
       END IF
 
       IF (PRESENT(zeff)) THEN
@@ -633,6 +637,10 @@ CONTAINS
          ELSE
             zeff = 0.0_dp
          END IF
+         
+         ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+               PRINT*, "Sagnik Mukhopadhyay change_11.15 zeff=", zeff
+       
       END IF
 
       IF (PRESENT(covalent_radius)) covalent_radius = qs_kind%covalent_radius
@@ -1127,6 +1135,10 @@ CONTAINS
                   zeff_correction = 0.0_dp
                END IF
                nelectron = nelectron + qs_kind_set(ikind)%natom*NINT(zeff - zeff_correction)
+               
+               ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+               PRINT*, "Sagnik Mukhopadhyay change_11.14 zeff_correction =", zeff_correction
+             
             END IF
 
             IF (PRESENT(basis_rcut)) THEN
@@ -1154,8 +1166,13 @@ CONTAINS
                   zeff_correction = 0.0_dp
                END IF
                total_zeff_corr = total_zeff_corr + qs_kind_set(ikind)%natom*zeff_correction
-            END IF
+               
+                        
+            ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+            PRINT*, "Sagnik Mukhopadhyay change_11.13 zeff_correction =", zeff_correction, "total_zeff_corr=", total_zeff_corr
 
+            END IF
+            
             IF (PRESENT(all_potential_present)) THEN
                IF (ASSOCIATED(all_potential)) THEN
                   all_potential_present = .TRUE.
@@ -2096,6 +2113,10 @@ CONTAINS
                              zeff=qs_kind%se_parameter%zeff, zeff_correction=zeff_correction)
          qs_kind%se_parameter%zeff = qs_kind%se_parameter%zeff - zeff_correction
 
+         ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+         PRINT*, "Sagnik Mukhopadhyay change_11.12 zeff_correction =", zeff_correction
+         
+         
          check = ((potential_name /= '') .OR. explicit_potential)
          IF (check) &
             CALL cp_warn(__LOCATION__, &

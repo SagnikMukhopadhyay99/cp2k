@@ -804,6 +804,9 @@ CONTAINS
       IF (PRESENT(alpha_nlcc)) alpha_nlcc => potential%alpha_nlcc
       IF (PRESENT(nct_nlcc)) nct_nlcc => potential%nct_nlcc
       IF (PRESENT(cval_nlcc)) cval_nlcc => potential%cval_nlcc
+      
+      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+      !PRINT*, "Sagnik Mukhopadhyay change_11.12 zeff_correction =", zeff
 
    END SUBROUTINE get_gth_potential
 
