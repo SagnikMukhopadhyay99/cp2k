@@ -134,6 +134,7 @@ list(
   ec_efield_local.F
   ec_environment.F
   ec_env_types.F
+  ec_external.F
   ec_methods.F
   ec_orth_solver.F
   ed_analysis.F
@@ -285,6 +286,7 @@ list(
   input_cp2k_restarts_util.F
   input_cp2k_rsgrid.F
   input_cp2k_subsys.F
+  input_cp2k_smeagol.F
   input_cp2k_tb.F
   input_cp2k_thermostats.F
   input_cp2k_transport.F
@@ -439,6 +441,7 @@ list(
   pao_ml.F
   pao_ml_gaussprocess.F
   pao_ml_neuralnet.F
+  pao_model.F
   pao_optimizer.F
   pao_param_exp.F
   pao_param.F
@@ -546,7 +549,6 @@ list(
   qs_elf_methods.F
   qs_energy.F
   qs_energy_init.F
-  qs_energy_matrix_w.F
   qs_energy_types.F
   qs_energy_utils.F
   qs_energy_window.F
@@ -739,6 +741,7 @@ list(
   rpa_gw_sigma_x.F
   rpa_im_time.F
   rpa_main.F
+  rpa_sigma_functional.F
   rpa_rse.F
   rpa_im_time_force_types.F
   rpa_im_time_force_methods.F
@@ -776,6 +779,10 @@ list(
   semi_empirical_utils.F
   simpar_types.F
   sirius_interface.F
+  smeagol_control_types.F
+  smeagol_emtoptions.F
+  smeagol_interface.F
+  smeagol_matrix_utils.F
   spglib_f08.F
   splines_methods.F
   splines_types.F
@@ -984,7 +991,10 @@ list(
   emd/rt_propagation_methods.F
   emd/rt_propagation_output.F
   emd/rt_propagation_utils.F
-  emd/rt_propagator_init.F)
+  emd/rt_propagator_init.F
+  emd/rt_bse.F
+  emd/rt_bse_io.F
+  emd/rt_bse_types.F)
 
 list(
   APPEND

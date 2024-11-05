@@ -238,6 +238,12 @@ CONTAINS
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
 
+      CALL keyword_create(keyword, __LOCATION__, name="EVERY_N_STEP", &
+                          description="Perform a linear response calculation every N-th step for MD run", &
+                          usage="EVERY_N_STEP 50", default_i_val=1)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
+
       CALL keyword_create(keyword, __LOCATION__, name="RESTART", &
                           description="Restart the response calculation if the restart file exists", &
                           usage="RESTART", &
@@ -398,6 +404,13 @@ CONTAINS
                              description="User-defined reference point of the velocity gauge factor.", &
                              usage="REFERENCE_POINT x y z", &
                              repeats=.FALSE., n_var=3, type_of_var=real_t, unit_str='bohr')
+         CALL section_add_keyword(section, keyword)
+         CALL keyword_release(keyword)
+
+         CALL keyword_create(keyword, __LOCATION__, name="Z_MATRIX_METHOD", &
+                             description="Use Z_matrix method to solve the response equation", &
+                             usage="Z_MATRIX_METHOD T", &
+                             default_l_val=.FALSE., lone_keyword_l_val=.TRUE.)
          CALL section_add_keyword(section, keyword)
          CALL keyword_release(keyword)
 

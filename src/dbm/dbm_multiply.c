@@ -47,6 +47,7 @@ static float *compute_rows_max_eps(const bool trans, const dbm_matrix_t *matrix,
   const int nrows = (trans) ? matrix->ncols : matrix->nrows;
   int *nblocks_per_row = calloc(nrows, sizeof(int));
   float *row_max_eps = malloc(nrows * sizeof(float));
+  assert(row_max_eps != NULL);
 
 #pragma omp parallel
   {
@@ -279,7 +280,7 @@ static void multiply_packs(const bool transa, const bool transb,
 
             // Count flops.
             dbm_library_counter_increment(m, n, k);
-            const int task_flops = 2 * m * n * k;
+            const int64_t task_flops = 2LL * m * n * k;
             flop_sum += task_flops;
             if (task_flops == 0) {
               continue;

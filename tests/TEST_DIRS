@@ -3,6 +3,8 @@
 # Directories have been reordered according the execution time needed for a gfortran pdbg run using 2 MPI tasks
 # in case a new directory is added just add it at the top of the list..
 # the order will be regularly checked and modified...
+QS/regtest-double-hybrid-stress-laplace                     libint
+QS/regtest-rpa-sigma                                        libint
 TMC/regtest_ana_on_the_fly                                  parallel mpiranks>2
 QS/regtest-cusolver                                         cusolvermp
 QS/regtest-dlaf                                             dlaf
@@ -109,6 +111,7 @@ QS/regtest-ri-rpa                                           libint
 QS/regtest-dcdft-hfx                                        libint libxc
 QS/regtest-dft-vdw-corr-2                                   libxc libint
 QS/regtest-pao-4
+QS/regtest-pao-5                                            libtorch
 Fist/regtest-3
 MC/regtest
 QS/regtest-gw                                               libint
@@ -365,3 +368,6 @@ Fist/regtest-deepmd                                         deepmd
 QS/regtest-elpa                                             elpa mpiranks==1||mpiranks%2==0
 Fist/regtest-plumed2                                        plumed2
 Fist/regtest-quip                                           quip
+QS/regtest-rtbse                                            libint
+QS/regtest-smeagol-1
+QS/regtest-smeagol-2                                        libsmeagol

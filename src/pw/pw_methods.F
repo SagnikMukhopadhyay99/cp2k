@@ -246,13 +246,12 @@ CONTAINS
 
             CALL timeset(routineN, handle)
 
-            ! This OMP clause causes an internal compiler error (ICE) with ifx (<=2024.2.1)
-#if defined(__INTEL_LLVM_COMPILER)
-            pw%array = ${type2type("0.0_dp", "r3d", kind)}$
-#else
+#if !defined(__INTEL_LLVM_COMPILER) || (20250000 <= __INTEL_LLVM_COMPILER)
 !$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw)
             pw%array = ${type2type("0.0_dp", "r3d", kind)}$
 !$OMP END PARALLEL WORKSHARE
+#else
+            pw%array = ${type2type("0.0_dp", "r3d", kind)}$
 #endif
 
             CALL timestop(handle)
@@ -953,6 +952,7 @@ CONTAINS
                      IF (.NOT. ASSOCIATED(pw_out%pw_grid, pw1%pw_grid) .OR. .NOT. ASSOCIATED(pw_out%pw_grid, pw2%pw_grid)) &
                         CPABORT("pw_multiply not implemented for non-identical grids!")
 
+#if !defined(__INTEL_LLVM_COMPILER) || (20250000 <= __INTEL_LLVM_COMPILER)
                      IF (my_alpha == 1.0_dp) THEN
 !$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw_out, pw1, pw2)
                         pw_out%array = pw_out%array + pw1%array*${type2type("pw2%array", kind2, kind)}$
@@ -962,6 +962,13 @@ CONTAINS
                         pw_out%array = pw_out%array + my_alpha*pw1%array*${type2type("pw2%array", kind2, kind)}$
 !$OMP END PARALLEL WORKSHARE
                      END IF
+#else
+                     IF (my_alpha == 1.0_dp) THEN
+                        pw_out%array = pw_out%array + pw1%array*${type2type("pw2%array", kind2, kind)}$
+                     ELSE
+                        pw_out%array = pw_out%array + my_alpha*pw1%array*${type2type("pw2%array", kind2, kind)}$
+                     END IF
+#endif
 
                      CALL timestop(handle)
 
@@ -1014,7 +1021,7 @@ CONTAINS
                      LOGICAL, INTENT(IN), OPTIONAL                      :: just_sum, local_only
                      REAL(KIND=dp)                                      :: integral_value
 
-                     CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_integral_ab'
+                     CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_integral_ab_${kind}$_${kind2}$_${space}$'
 
                      INTEGER                                            :: handle, loc_sumtype
                      LOGICAL                                            :: my_just_sum, my_local_only
@@ -1062,8 +1069,7 @@ CONTAINS
                         #:elif kind2[0]=="r"
                            integral_value = accurate_sum(REAL(pw1%array, KIND=dp)*pw2%array) !? complex bit
                         #:else
-                           integral_value = accurate_sum(REAL(CONJG(pw1%array) &
-                                                              *pw2%array, KIND=dp)) !? complex bit
+                           integral_value = accurate_sum(REAL(CONJG(pw1%array)*pw2%array, KIND=dp))
                         #:endif
 
                      END IF
@@ -1676,8 +1682,8 @@ CONTAINS
 
                      CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_gauss_damp'
 
-                     INTEGER                                            :: handle
-                     REAL(KIND=dp)                                      :: omega_2
+                     INTEGER                                            :: handle, i
+                     REAL(KIND=dp)                                      :: omega_2, tmp
 
                      CALL timeset(routineN, handle)
                      CPASSERT(omega >= 0)
@@ -1685,9 +1691,12 @@ CONTAINS
                      omega_2 = omega*omega
                      omega_2 = 0.25_dp/omega_2
 
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw,omega_2)
-                     pw%array = pw%array*EXP(-pw%pw_grid%gsq*omega_2)
-!$OMP END PARALLEL WORKSHARE
+!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp) SHARED(pw,omega_2)
+                     DO i = 1, SIZE(pw%array)
+                        tmp = EXP(-pw%pw_grid%gsq(i)*omega_2)
+                        pw%array(i) = pw%array(i)*tmp
+                     END DO
+!$OMP END PARALLEL DO
 
                      CALL timestop(handle)
 
@@ -1707,8 +1716,8 @@ CONTAINS
 
                      CHARACTER(len=*), PARAMETER :: routineN = 'pw_log_deriv_gauss'
 
-                     INTEGER                                            :: handle
-                     REAL(KIND=dp)                                      :: omega_2
+                     INTEGER                                            :: handle, i
+                     REAL(KIND=dp)                                      :: omega_2, tmp
 
                      CALL timeset(routineN, handle)
                      CPASSERT(omega >= 0)
@@ -1716,9 +1725,12 @@ CONTAINS
                      omega_2 = omega*omega
                      omega_2 = 0.25_dp/omega_2
 
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw,omega_2)
-                     pw%array = pw%array*(1.0_dp + omega_2*pw%pw_grid%gsq)
-!$OMP END PARALLEL WORKSHARE
+!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp) SHARED(pw,omega_2)
+                     DO i = 1, SIZE(pw%array)
+                        tmp = 1.0_dp + omega_2*pw%pw_grid%gsq(i)
+                        pw%array(i) = pw%array(i)*tmp
+                     END DO
+!$OMP END PARALLEL DO
 
                      CALL timestop(handle)
                   END SUBROUTINE pw_log_deriv_gauss
@@ -1744,7 +1756,7 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER :: routineN = 'pw_compl_gauss_damp'
 
                      INTEGER                                            :: cnt, handle, i
-                     REAL(KIND=dp)                                      :: omega_2, tmp
+                     REAL(KIND=dp)                                      :: omega_2, tmp, tmp2
 
                      CALL timeset(routineN, handle)
 
@@ -1753,14 +1765,15 @@ CONTAINS
 
                      cnt = SIZE(pw%array)
 
-!$OMP PARALLEL DO PRIVATE(i, tmp) DEFAULT(NONE) SHARED(cnt, pw,omega_2)
+!$OMP PARALLEL DO PRIVATE(i, tmp, tmp2) DEFAULT(NONE) SHARED(cnt, pw,omega_2)
                      DO i = 1, cnt
                         tmp = -omega_2*pw%pw_grid%gsq(i)
                         IF (ABS(tmp) > 1.0E-5_dp) THEN
-                           pw%array(i) = pw%array(i)*(1.0_dp - EXP(tmp))
+                           tmp2 = 1.0_dp - EXP(tmp)
                         ELSE
-                           pw%array(i) = pw%array(i)*(tmp + 0.5_dp*tmp*(tmp + (1.0_dp/3.0_dp)*tmp**2))
+                           tmp2 = tmp + 0.5_dp*tmp*(tmp + (1.0_dp/3.0_dp)*tmp**2)
                         END IF
+                        pw%array(i) = pw%array(i)*tmp2
                      END DO
 !$OMP END PARALLEL DO
 
@@ -1782,23 +1795,24 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER :: routineN = 'pw_log_deriv_compl_gauss'
 
                      INTEGER                                            :: handle, i
-                     REAL(KIND=dp)                                      :: omega_2, tmp
+                     REAL(KIND=dp)                                      :: omega_2, tmp, tmp2
 
                      CALL timeset(routineN, handle)
 
                      omega_2 = omega*omega
                      omega_2 = 0.25_dp/omega_2
 
-!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp) &
+!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp,tmp2) &
 !$OMP             SHARED(pw,omega_2)
                      DO i = 1, SIZE(pw%array)
                         tmp = omega_2*pw%pw_grid%gsq(i)
                         ! For too small arguments, use the Taylor polynomial to prevent division by zero
                         IF (ABS(tmp) >= 0.003_dp) THEN
-                           pw%array(i) = pw%array(i)*(1.0_dp - tmp*EXP(-tmp)/(1.0_dp - EXP(-tmp)))
+                           tmp2 = 1.0_dp - tmp*EXP(-tmp)/(1.0_dp - EXP(-tmp))
                         ELSE
-                           pw%array(i) = pw%array(i)*(0.5_dp*tmp - tmp**2/12.0_dp)
+                           tmp2 = 0.5_dp*tmp - tmp**2/12.0_dp
                         END IF
+                        pw%array(i) = pw%array(i)*tmp2
                      END DO
 !$OMP END PARALLEL DO
 
@@ -1828,17 +1842,20 @@ CONTAINS
 
                      CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_gauss_damp_mix'
 
-                     INTEGER                                            :: handle
-                     REAL(KIND=dp)                                      :: omega_2
+                     INTEGER                                            :: handle, i
+                     REAL(KIND=dp)                                      :: omega_2, tmp
 
                      CALL timeset(routineN, handle)
 
                      omega_2 = omega*omega
                      omega_2 = 0.25_dp/omega_2
 
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw, omega_2, scale_coul, scale_long)
-                     pw%array = pw%array*(scale_coul + scale_long*EXP(-pw%pw_grid%gsq*omega_2))
-!$OMP END PARALLEL WORKSHARE
+!$OMP PARALLEL DO DEFAULT(NONE) SHARED(pw, omega_2, scale_coul, scale_long) PRIVATE(i,tmp)
+                     DO i = 1, SIZE(pw%array)
+                        tmp = scale_coul + scale_long*EXP(-pw%pw_grid%gsq(i)*omega_2)
+                        pw%array(i) = pw%array(i)*tmp
+                     END DO
+!$OMP END PARALLEL DO
 
                      CALL timestop(handle)
 
@@ -1861,18 +1878,19 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER :: routineN = 'pw_log_deriv_mix_cl'
 
                      INTEGER                                            :: handle, i
-                     REAL(KIND=dp)                                      :: omega_2, tmp
+                     REAL(KIND=dp)                                      :: omega_2, tmp, tmp2
 
                      CALL timeset(routineN, handle)
 
                      omega_2 = omega*omega
                      omega_2 = 0.25_dp/omega_2
 
-!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp) &
+!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp,tmp2) &
 !$OMP             SHARED(pw,omega_2,scale_long,scale_coul)
                      DO i = 1, SIZE(pw%array)
                         tmp = omega_2*pw%pw_grid%gsq(i)
-                        pw%array(i) = pw%array(i)*(1.0_dp + scale_long*tmp*EXP(-tmp)/(scale_coul + scale_long*EXP(-tmp)))
+                        tmp2 = 1.0_dp + scale_long*tmp*EXP(-tmp)/(scale_coul + scale_long*EXP(-tmp))
+                        pw%array(i) = pw%array(i)*tmp2
                      END DO
 !$OMP END PARALLEL DO
 
@@ -1901,19 +1919,20 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_truncated'
 
                      INTEGER                                            :: handle, i
-                     REAL(KIND=dp)                                      :: tmp
+                     REAL(KIND=dp)                                      :: tmp, tmp2
 
                      CALL timeset(routineN, handle)
                      CPASSERT(rcutoff >= 0)
 
-!$OMP PARALLEL DO PRIVATE(i,tmp) DEFAULT(NONE) SHARED(pw, rcutoff)
+!$OMP PARALLEL DO PRIVATE(i,tmp,tmp2) DEFAULT(NONE) SHARED(pw, rcutoff)
                      DO i = 1, SIZE(pw%array)
                         tmp = SQRT(pw%pw_grid%gsq(i))*rcutoff
                         IF (tmp >= 0.005_dp) THEN
-                           pw%array(i) = pw%array(i)*(1.0_dp - COS(tmp))
+                           tmp2 = 1.0_dp - COS(tmp)
                         ELSE
-                           pw%array(i) = pw%array(i)*tmp**2/2.0_dp*(1.0 - tmp**2/12.0_dp)
+                           tmp2 = tmp**2/2.0_dp*(1.0 - tmp**2/12.0_dp)
                         END IF
+                        pw%array(i) = pw%array(i)*tmp2
                      END DO
 !$OMP END PARALLEL DO
 
@@ -1936,22 +1955,23 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER :: routineN = 'pw_log_deriv_trunc'
 
                      INTEGER                                            :: handle, i
-                     REAL(KIND=dp)                                      :: rchalf, tmp
+                     REAL(KIND=dp)                                      :: rchalf, tmp, tmp2
 
                      CALL timeset(routineN, handle)
                      CPASSERT(rcutoff >= 0)
 
                      rchalf = 0.5_dp*rcutoff
-!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp) &
+!$OMP PARALLEL DO DEFAULT(NONE) PRIVATE(i,tmp,tmp2) &
 !$OMP             SHARED(pw,rchalf)
                      DO i = 1, SIZE(pw%array)
                         tmp = rchalf*SQRT(pw%pw_grid%gsq(i))
                         ! For too small arguments, use the Taylor polynomial to prevent division by zero
                         IF (ABS(tmp) >= 0.0001_dp) THEN
-                           pw%array(i) = pw%array(i)*(1.0_dp - tmp/TAN(tmp))
+                           tmp2 = 1.0_dp - tmp/TAN(tmp)
                         ELSE
-                           pw%array(i) = pw%array(i)*tmp**2*(1.0_dp + tmp**2/15.0_dp)/3.0_dp
+                           tmp2 = tmp**2*(1.0_dp + tmp**2/15.0_dp)/3.0_dp
                         END IF
+                        pw%array(i) = pw%array(i)*tmp2
                      END DO
 !$OMP END PARALLEL DO
 
@@ -1977,7 +1997,7 @@ CONTAINS
                      CHARACTER(len=*), PARAMETER                        :: routineN = 'pw_derive'
 
                      COMPLEX(KIND=dp)                                   :: im
-                     INTEGER                                            :: handle, m
+                     INTEGER                                            :: handle, m, idx, idir
 
                      CALL timeset(routineN, handle)
 
@@ -1987,35 +2007,21 @@ CONTAINS
                      m = SUM(n)
                      im = CMPLX(0.0_dp, 1.0_dp, KIND=dp)**m
 
-                     IF (n(1) == 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw)
-                        pw%array(:) = pw%array(:)*pw%pw_grid%g(1, :)
-!$OMP END PARALLEL WORKSHARE
-                     ELSE IF (n(1) > 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(n, pw)
-                        pw%array(:) = pw%array(:)*(pw%pw_grid%g(1, :)**n(1))
-!$OMP END PARALLEL WORKSHARE
-                     END IF
-
-                     IF (n(2) == 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw)
-                        pw%array(:) = pw%array(:)*pw%pw_grid%g(2, :)
-!$OMP END PARALLEL WORKSHARE
-                     ELSE IF (n(2) > 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(n, pw)
-                        pw%array(:) = pw%array(:)*(pw%pw_grid%g(2, :)**n(2))
-!$OMP END PARALLEL WORKSHARE
-                     END IF
-
-                     IF (n(3) == 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(pw)
-                        pw%array(:) = pw%array(:)*pw%pw_grid%g(3, :)
-!$OMP END PARALLEL WORKSHARE
-                     ELSE IF (n(3) > 1) THEN
-!$OMP PARALLEL WORKSHARE DEFAULT(NONE) SHARED(n, pw)
-                        pw%array(:) = pw%array(:)*(pw%pw_grid%g(3, :)**n(3))
-!$OMP END PARALLEL WORKSHARE
-                     END IF
+                     DO idir = 1, 3
+                        IF (n(idir) == 1) THEN
+!$OMP PARALLEL DO DEFAULT(NONE) SHARED(pw,idir) PRIVATE(idx)
+                           DO idx = 1, SIZE(pw%array)
+                              pw%array(idx) = pw%array(idx)*pw%pw_grid%g(idir, idx)
+                           END DO
+!$OMP END PARALLEL DO
+                        ELSE IF (n(idir) > 1) THEN
+!$OMP PARALLEL DO DEFAULT(NONE) SHARED(n, pw,idir) PRIVATE(idx)
+                           DO idx = 1, SIZE(pw%array)
+                              pw%array(idx) = pw%array(idx)*pw%pw_grid%g(idir, idx)**n(idir)
+                           END DO
+!$OMP END PARALLEL DO
+                        END IF
+                     END DO
 
                      ! im can take the values 1, -1, i, -i
                      ! skip this if im == 1
@@ -2134,14 +2140,14 @@ CONTAINS
 !$OMP PARALLEL DO PRIVATE (ig) DEFAULT(NONE) PRIVATE(gg) SHARED(cnt, i, o3, pw, pwdr2_gg)
                         DO ig = pw%pw_grid%first_gne0, cnt
                            gg = pw%pw_grid%g(i, ig)**2 - o3*pw%pw_grid%gsq(ig)
-                           pwdr2_gg%array(ig) = gg*pw%array(ig)/pw%pw_grid%gsq(ig)
+                           pwdr2_gg%array(ig) = gg/pw%pw_grid%gsq(ig)*pw%array(ig)
                         END DO
 !$OMP END PARALLEL DO
                      ELSE
 !$OMP PARALLEL DO PRIVATE (ig) DEFAULT(NONE) SHARED(cnt, i, j, pw, pwdr2_gg)
                         DO ig = pw%pw_grid%first_gne0, cnt
-                           pwdr2_gg%array(ig) = pw%array(ig)*(pw%pw_grid%g(i, ig)*pw%pw_grid%g(j, ig)) &
-                                                /pw%pw_grid%gsq(ig)
+                           pwdr2_gg%array(ig) = pw%array(ig)*((pw%pw_grid%g(i, ig)*pw%pw_grid%g(j, ig)) &
+                                                              /pw%pw_grid%gsq(ig))
                         END DO
 !$OMP END PARALLEL DO
                      END IF

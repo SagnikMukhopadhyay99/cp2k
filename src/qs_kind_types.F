@@ -219,6 +219,7 @@ MODULE qs_kind_types
       TYPE(qs_atom_dispersion_type), POINTER :: dispersion => Null()
       REAL(KIND=dp), DIMENSION(:, :), POINTER :: reltmat => Null()
       INTEGER                                :: pao_basis_size = -1
+      CHARACTER(LEN=default_path_length)     :: pao_model_file = ""
       TYPE(pao_potential_type), DIMENSION(:), POINTER :: pao_potentials => Null()
       TYPE(pao_descriptor_type), DIMENSION(:), POINTER :: pao_descriptors => Null()
    END TYPE qs_kind_type
@@ -373,6 +374,7 @@ CONTAINS
 !> \param dftb_parameter ...
 !> \param xtb_parameter ...
 !> \param dftb3_param ...
+!> \param zatom ...
 !> \param zeff ...
 !> \param elec_conf ...
 !> \param mao ...
@@ -427,6 +429,7 @@ CONTAINS
 !> \param name ...
 !> \param element_symbol ...
 !> \param pao_basis_size ...
+!> \param pao_model_file ...
 !> \param pao_potentials ...
 !> \param pao_descriptors ...
 !> \param nelec ...
@@ -435,7 +438,7 @@ CONTAINS
                           basis_set, basis_type, ncgf, nsgf, &
                           all_potential, tnadd_potential, gth_potential, sgp_potential, upf_potential, &
                           se_parameter, dftb_parameter, xtb_parameter, &
-                          dftb3_param, zeff, elec_conf, mao, lmax_dftb, &
+                          dftb3_param, zatom, zeff, elec_conf, mao, lmax_dftb, &
                           alpha_core_charge, ccore_charge, core_charge, core_charge_radius, &
                           paw_proj_set, paw_atom, hard_radius, hard0_radius, max_rad_local, &
                           covalent_radius, vdw_radius, &
@@ -447,7 +450,7 @@ CONTAINS
                           bs_occupation, magnetization, no_optimize, addel, laddel, naddel, orbitals, &
                           max_scf, eps_scf, smear, u_ramping, u_minus_j_target, eps_u_ramping, &
                           init_u_ramping_each_scf, reltmat, ghost, floating, name, element_symbol, &
-                          pao_basis_size, pao_potentials, pao_descriptors, nelec)
+                          pao_basis_size, pao_model_file, pao_potentials, pao_descriptors, nelec)
 
       TYPE(qs_kind_type)                                 :: qs_kind
       TYPE(gto_basis_set_type), OPTIONAL, POINTER        :: basis_set
@@ -461,7 +464,9 @@ CONTAINS
       TYPE(semi_empirical_type), OPTIONAL, POINTER       :: se_parameter
       TYPE(qs_dftb_atom_type), OPTIONAL, POINTER         :: dftb_parameter
       TYPE(xtb_atom_type), OPTIONAL, POINTER             :: xtb_parameter
-      REAL(KIND=dp), INTENT(OUT), OPTIONAL               :: dftb3_param, zeff
+      REAL(KIND=dp), INTENT(OUT), OPTIONAL               :: dftb3_param
+      INTEGER, INTENT(OUT), OPTIONAL                     :: zatom
+      REAL(KIND=dp), INTENT(OUT), OPTIONAL               :: zeff
       INTEGER, DIMENSION(:), OPTIONAL, POINTER           :: elec_conf
       INTEGER, INTENT(OUT), OPTIONAL                     :: mao, lmax_dftb
       REAL(KIND=dp), INTENT(OUT), OPTIONAL               :: alpha_core_charge, ccore_charge, &
@@ -498,6 +503,8 @@ CONTAINS
          INTENT(OUT), OPTIONAL                           :: name
       CHARACTER(LEN=2), INTENT(OUT), OPTIONAL            :: element_symbol
       INTEGER, INTENT(OUT), OPTIONAL                     :: pao_basis_size
+      CHARACTER(LEN=default_path_length), INTENT(OUT), &
+         OPTIONAL                                        :: pao_model_file
       TYPE(pao_potential_type), DIMENSION(:), OPTIONAL, &
          POINTER                                         :: pao_potentials
       TYPE(pao_descriptor_type), DIMENSION(:), &
@@ -506,6 +513,7 @@ CONTAINS
 
       CHARACTER(LEN=default_string_length)               :: my_basis_type
       INTEGER                                            :: l
+      LOGICAL                                            :: found
       TYPE(gto_basis_set_type), POINTER                  :: tmp_basis_set
 
       ! Retrieve basis set from the kind container
@@ -623,6 +631,12 @@ CONTAINS
          ! This is a part of eleventh change added by Sagnik Mukhopadhyay
       PRINT*, "Sagnik Mukhopadhyay change_11.16 zeff_core_charge=", core_charge
       
+      END IF
+
+      IF (PRESENT(zatom)) THEN
+         ! Retrieve information on element
+         CALL get_ptable_info(qs_kind%element_symbol, ielement=zatom, found=found)
+         CPASSERT(found)
       END IF
 
       IF (PRESENT(zeff)) THEN
@@ -820,6 +834,7 @@ CONTAINS
       IF (PRESENT(lmax_dftb)) lmax_dftb = qs_kind%lmax_dftb
 
       IF (PRESENT(pao_basis_size)) pao_basis_size = qs_kind%pao_basis_size
+      IF (PRESENT(pao_model_file)) pao_model_file = qs_kind%pao_model_file
       IF (PRESENT(pao_potentials)) pao_potentials => qs_kind%pao_potentials
       IF (PRESENT(pao_descriptors)) pao_descriptors => qs_kind%pao_descriptors
    END SUBROUTINE get_qs_kind
@@ -1682,9 +1697,15 @@ CONTAINS
             END IF
          END DO
 
-         ! parse PAO_BASIS_SIZE
+         ! parse PAO keywords
          CALL section_vals_val_get(kind_section, keyword_name="PAO_BASIS_SIZE", i_rep_section=k_rep, &
                                    i_val=qs_kind%pao_basis_size)
+         CALL section_vals_val_get(kind_section, keyword_name="PAO_MODEL_FILE", i_rep_section=k_rep, &
+                                   explicit=explicit)
+         IF (explicit) THEN
+            CALL section_vals_val_get(kind_section, keyword_name="PAO_MODEL_FILE", i_rep_section=k_rep, &
+                                      c_val=qs_kind%pao_model_file)
+         END IF
 
          ! parse PAO_POTENTIAL sections
          pao_pot_section => section_vals_get_subs_vals(kind_section, "PAO_POTENTIAL", i_rep_section=k_rep)

@@ -12,7 +12,9 @@
 MODULE cp_control_types
    USE cp_fm_types,                     ONLY: cp_fm_release,&
                                               cp_fm_type
-   USE input_constants,                 ONLY: do_full_density
+   USE input_constants,                 ONLY: do_full_density,&
+                                              rtp_bse_ham_G0W0,&
+                                              rtp_method_tddft
    USE kinds,                           ONLY: default_path_length,&
                                               default_string_length,&
                                               dp
@@ -21,6 +23,9 @@ MODULE cp_control_types
    USE qs_cdft_types,                   ONLY: cdft_control_create,&
                                               cdft_control_release,&
                                               cdft_control_type
+   USE smeagol_control_types,           ONLY: smeagol_control_create,&
+                                              smeagol_control_release,&
+                                              smeagol_control_type
    USE xas_control,                     ONLY: xas_control_release,&
                                               xas_control_type
 #include "./base/base_uses.f90"
@@ -69,6 +74,8 @@ MODULE cp_control_types
       INTEGER                              :: mat_exp = 0
       INTEGER                              :: propagator = 0
       LOGICAL                              :: fixed_ions = .FALSE.
+      INTEGER                              :: rtp_method = rtp_method_tddft
+      INTEGER                              :: rtbse_ham = rtp_bse_ham_G0W0
       INTEGER                              :: initial_wfn = 0
       REAL(dp)                             :: eps_exp = 0.0_dp
       LOGICAL                              :: initial_step = .FALSE.
@@ -567,6 +574,7 @@ MODULE cp_control_types
       TYPE(xas_control_type), POINTER      :: xas_control => NULL()
       TYPE(expot_control_type), POINTER    :: expot_control => NULL()
       TYPE(maxwell_control_type), POINTER  :: maxwell_control => NULL()
+      TYPE(smeagol_control_type), POINTER  :: smeagol_control => NULL()
       TYPE(efield_p_type), POINTER, &
          DIMENSION(:)                      :: efield_fields => NULL()
       INTEGER                              :: nspins = 0, &
@@ -775,6 +783,7 @@ CONTAINS
       NULLIFY (dft_control%admm_control)
       NULLIFY (dft_control%expot_control)
       NULLIFY (dft_control%maxwell_control)
+      NULLIFY (dft_control%smeagol_control)
       NULLIFY (dft_control%rtp_control)
       NULLIFY (dft_control%sccs_control)
       dft_control%do_sccs = .FALSE.
@@ -782,6 +791,7 @@ CONTAINS
       dft_control%apply_dmfet_pot = .FALSE.
       CALL qs_control_create(dft_control%qs_control)
       CALL tddfpt2_control_create(dft_control%tddfpt2_control)
+      CALL smeagol_control_create(dft_control%smeagol_control)
    END SUBROUTINE dft_control_create
 
 ! **************************************************************************************************
@@ -804,6 +814,7 @@ CONTAINS
       CALL admm_control_release(dft_control%admm_control)
       CALL expot_control_release(dft_control%expot_control)
       CALL maxwell_control_release(dft_control%maxwell_control)
+      CALL smeagol_control_release(dft_control%smeagol_control)
       CALL efield_fields_release(dft_control%efield_fields)
       IF (ASSOCIATED(dft_control%sccs_control)) DEALLOCATE (dft_control%sccs_control)
       IF (ASSOCIATED(dft_control%period_efield)) THEN

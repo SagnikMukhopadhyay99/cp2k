@@ -114,11 +114,12 @@ MODULE f77_interface
                                               rm_mp_perf_env
    USE nnp_environment,                 ONLY: nnp_init
    USE nnp_environment_types,           ONLY: nnp_type
-   USE offload_api,                     ONLY: offload_get_chosen_device,&
-                                              offload_get_device_count,&
+   USE offload_api,                     ONLY: offload_get_device_count,&
                                               offload_init,&
                                               offload_set_chosen_device
    USE periodic_table,                  ONLY: init_periodic_table
+   USE pw_fpga,                         ONLY: pw_fpga_finalize,&
+                                              pw_fpga_init
    USE pw_gpu,                          ONLY: pw_gpu_finalize,&
                                               pw_gpu_init
    USE pwdft_environment,               ONLY: pwdft_init
@@ -133,6 +134,8 @@ MODULE f77_interface
                                               qs_env_create,&
                                               qs_environment_type
    USE reference_manager,               ONLY: remove_all_references
+   USE sirius_interface,                ONLY: cp_sirius_finalize,&
+                                              cp_sirius_init
    USE string_table,                    ONLY: string_table_allocate,&
                                               string_table_deallocate
    USE timings,                         ONLY: add_timer_env,&
@@ -216,6 +219,8 @@ CONTAINS
       INTEGER, INTENT(out)                               :: ierr
 
       INTEGER                                            :: offload_device_count, unit_nr
+      INTEGER, POINTER                                   :: active_device_id
+      INTEGER, TARGET                                    :: offload_chosen_device
       TYPE(cp_logger_type), POINTER                      :: logger
 
       IF (.NOT. module_initialized) THEN
@@ -271,33 +276,26 @@ CONTAINS
          !   *** init the bibliography ***
          CALL add_all_references()
 
+         NULLIFY (active_device_id)
          offload_device_count = offload_get_device_count()
 
          ! Select active offload device when available.
          IF (offload_device_count > 0) THEN
-            CALL offload_set_chosen_device(MOD(default_para_env%mepos, offload_device_count))
+            offload_chosen_device = MOD(default_para_env%mepos, offload_device_count)
+            CALL offload_set_chosen_device(offload_chosen_device)
+            active_device_id => offload_chosen_device
          END IF
 
          ! Initialize the DBCSR configuration
          ! Attach the time handler hooks to DBCSR
-#if defined __DBCSR_ACC
-         IF (offload_device_count > 0) THEN
-            CALL dbcsr_init_lib(default_para_env%get_handle(), timeset_hook, timestop_hook, &
-                                cp_abort_hook, cp_warn_hook, io_unit=unit_nr, &
-                                accdrv_active_device_id=offload_get_chosen_device())
-         ELSE
-            CALL dbcsr_init_lib(default_para_env%get_handle(), timeset_hook, timestop_hook, &
-                                cp_abort_hook, cp_warn_hook, io_unit=unit_nr)
-         END IF
-#else
          CALL dbcsr_init_lib(default_para_env%get_handle(), timeset_hook, timestop_hook, &
-                             cp_abort_hook, cp_warn_hook, io_unit=unit_nr)
-#endif
+                             cp_abort_hook, cp_warn_hook, io_unit=unit_nr, &
+                             accdrv_active_device_id=active_device_id)
+         CALL cp_sirius_init() ! independent of method_name_id == do_sirius
+         CALL cp_dlaf_initialize()
+         CALL pw_fpga_init()
          CALL pw_gpu_init()
          CALL grid_library_init()
-
-         CALL cp_dlaf_initialize()
-
          CALL dbm_library_init()
       ELSE
          ierr = cp_failure_level
@@ -337,14 +335,14 @@ CONTAINS
          CALL dbm_library_finalize()
          CALL grid_library_finalize()
          CALL pw_gpu_finalize()
+         CALL pw_fpga_finalize()
+         CALL cp_dlaf_finalize()
+         CALL cp_sirius_finalize()
          ! Finalize the DBCSR library
          CALL dbcsr_finalize_lib()
 
          CALL mp_para_env_release(default_para_env)
-         ierr = 0
          CALL cp_rm_default_logger()
-
-         CALL cp_dlaf_finalize()
 
          ! Deallocate the bibliography
          CALL remove_all_references()
@@ -354,6 +352,8 @@ CONTAINS
          IF (finalize_mpi) THEN
             CALL mp_world_finalize()
          END IF
+
+         ierr = 0
       END IF
    END SUBROUTINE finalize_cp2k
 
