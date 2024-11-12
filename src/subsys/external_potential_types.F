@@ -54,6 +54,8 @@ MODULE external_potential_types
    USE periodic_table,                  ONLY: ptable
    USE string_utilities,                ONLY: remove_word,&
                                               uppercase
+                                              
+  
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -721,7 +723,7 @@ CONTAINS
                                 cprj_ppnl, vprj_ppnl, wprj_ppnl, hprj_ppnl, kprj_ppnl, &
                                 lpot_present, nexp_lpot, alpha_lpot, nct_lpot, cval_lpot, &
                                 lsd_present, nexp_lsd, alpha_lsd, nct_lsd, cval_lsd, &
-                                nlcc_present, nexp_nlcc, alpha_nlcc, nct_nlcc, cval_nlcc)
+                                nlcc_present, nexp_nlcc, alpha_nlcc, nct_nlcc, cval_nlcc, new_zeff_correction)
 
       TYPE(gth_potential_type), INTENT(IN)               :: potential
       CHARACTER(LEN=default_string_length), &
@@ -754,7 +756,13 @@ CONTAINS
       REAL(KIND=dp), DIMENSION(:), OPTIONAL, POINTER     :: alpha_nlcc
       INTEGER, DIMENSION(:), OPTIONAL, POINTER           :: nct_nlcc
       REAL(KIND=dp), DIMENSION(:, :), OPTIONAL, POINTER  :: cval_nlcc
-
+      
+      ! this is a part of twelveth change added by Sagnik Mukhopadhyay
+      REAL(KIND=dp), INTENT(INOUT), OPTIONAL                :: new_zeff_correction
+      !LOGICAL, INTENT(OUT), OPTIONAL                     :: potentiostat_present
+      
+      
+      
       IF (PRESENT(name)) name = potential%name
       IF (PRESENT(aliases)) aliases = potential%aliases
       IF (PRESENT(alpha_core_charge)) &
@@ -773,7 +781,14 @@ CONTAINS
       IF (PRESENT(nprj_ppnl_max)) nprj_ppnl_max = potential%nprj_ppnl_max
       IF (PRESENT(z)) z = potential%z
       IF (PRESENT(zeff)) zeff = potential%zeff
-      IF (PRESENT(zeff_correction)) zeff_correction = potential%zeff_correction
+      IF (PRESENT(zeff_correction)) THEN
+         zeff_correction = potential%zeff_correction
+         PRINT*, "Sagnik Mukhopadhyay change_11.12 zeff_correction =", zeff_correction
+         IF (PRESENT(new_zeff_correction)) THEN
+            !zeff_correction=new_zeff_correction
+            PRINT*, "Sagnik Mukhopadhyay change_13.4 zeff_correction =", zeff_correction
+         END IF
+      END IF   
       IF (PRESENT(ppl_present)) ppl_present = (potential%nexp_ppl > 0)
       IF (PRESENT(ppnl_present)) ppnl_present = (potential%nppnl > 0)
       IF (PRESENT(alpha_ppnl)) alpha_ppnl => potential%alpha_ppnl
@@ -806,7 +821,11 @@ CONTAINS
       IF (PRESENT(cval_nlcc)) cval_nlcc => potential%cval_nlcc
       
       ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-      !PRINT*, "Sagnik Mukhopadhyay change_11.12 zeff_correction =", zeff
+      !IF (potentiostat_present) zeff_correction=total_zeff_corr
+      
+      
+      
+      
 
    END SUBROUTINE get_gth_potential
 

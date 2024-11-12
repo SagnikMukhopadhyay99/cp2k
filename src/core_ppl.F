@@ -92,7 +92,7 @@ CONTAINS
 ! **************************************************************************************************
    SUBROUTINE build_core_ppl(matrix_h, matrix_p, force, virial, calculate_forces, use_virial, nder, &
                              qs_kind_set, atomic_kind_set, particle_set, sab_orb, sac_ppl, &
-                             nimages, cell_to_index, basis_type, deltaR, atcore)
+                             nimages, cell_to_index, basis_type, deltaR, atcore, new_zeff_correction)
 
       TYPE(dbcsr_p_type), DIMENSION(:, :), POINTER       :: matrix_h, matrix_p
       TYPE(qs_force_type), DIMENSION(:), POINTER         :: force
@@ -158,12 +158,20 @@ CONTAINS
       REAL(KIND=dp), DIMENSION(4, nexp_max)              :: cval_ppl
       REAL(KIND=dp), DIMENSION(3, SIZE(particle_set))    :: force_thread
       TYPE(sgp_potential_type), POINTER                  :: sgp_potential
+      
+      ! this is a part of twelveth change added by Sagnik Mukhopadhyay
+      REAL(KIND=dp), INTENT(INOUT), OPTIONAL                :: new_zeff_correction
+      
+      
 
 !$    INTEGER(kind=omp_lock_kind), &
 !$       ALLOCATABLE, DIMENSION(:) :: locks
 !$    INTEGER                                            :: lock_num, hash, hash1, hash2
 !$    INTEGER(KIND=int_8)                                :: iatom8
 !$    INTEGER, PARAMETER                                 :: nlock = 501
+
+     ! this is a part of twelveth change added by Sagnik Mukhopadhyay
+     PRINT*, "Sagnik Mukhopadhyay change_13.2", new_zeff_correction
 
       do_dR = PRESENT(deltaR)
       doat = PRESENT(atcore)
@@ -201,7 +209,7 @@ CONTAINS
 
       CALL get_qs_kind_set(qs_kind_set, maxco=maxco, maxlgto=maxlgto, &
                            maxsgf=maxsgf, maxnset=maxnset, maxlppl=maxlppl, &
-                           basis_type=basis_type)
+                           basis_type=basis_type, new_zeff_correction=new_zeff_correction)
 
       maxl = MAX(maxlgto, maxlppl)
       CALL init_orbital_pointers(2*maxl + 2*nder + 1)

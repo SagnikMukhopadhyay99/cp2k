@@ -19,6 +19,7 @@ MODULE potentiostat_types
       INTEGER                          :: ref_count = 0
       REAL(KIND=dp)                    :: C_0 = 0.0_dp
       REAL(KIND=dp)                    :: PHI_0 = 0.0_dp
+      LOGICAL                          :: potentiostat_present= .FALSE.
       TYPE(section_vals_type), POINTER :: section => NULL()
       
    END TYPE potentiostat_type
@@ -44,7 +45,7 @@ MODULE potentiostat_types
    potentiostat%section => potentiostat_section
    CALL section_vals_val_get(potentiostat_section, "C_0", r_val=potentiostat%C_0)
    CALL section_vals_val_get(potentiostat_section, "PHI_0", r_val=potentiostat%PHI_0)
-   
+   CALL section_vals_val_get(potentiostat_section, "potentiostat_present", l_val=potentiostat%potentiostat_present)
    END SUBROUTINE create_potentiostat_type
    
    !***********************************************************************************************

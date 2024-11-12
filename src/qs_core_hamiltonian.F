@@ -400,7 +400,7 @@ CONTAINS
             CALL overlap_condnum(matrix_s, condnum, iw, norml1, norml2, use_arnoldi, blacs_env)
          END IF
       END IF
-
+      
       CALL timestop(handle)
 
    END SUBROUTINE build_core_hamiltonian_matrix
@@ -438,9 +438,17 @@ CONTAINS
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
       TYPE(qs_ks_env_type), POINTER                      :: ks_env
       TYPE(virial_type), POINTER                         :: virial
+      
+      ! this is a part of twelveth change added by Sagnik Mukhopadhyay
+     ! REAL(KIND=dp), INTENT(IN), OPTIONAL                :: new_zeff_correction
+      
+       
 
       NULLIFY (dft_control)
       CALL get_qs_env(qs_env=qs_env, ks_env=ks_env, dft_control=dft_control, natom=natom)
+      
+      
+      
       nimages = dft_control%nimages
       IF (PRESENT(atcore)) THEN
          CPASSERT(SIZE(atcore) >= natom)
@@ -506,12 +514,13 @@ CONTAINS
                ELSE
                   CALL build_core_ppl(matrix_h, matrix_p, force, virial, calculate_forces, use_virial, nder, &
                                       qs_kind_set, atomic_kind_set, particle_set, sab_orb, sac_ppl, &
-                                      nimages, cell_to_index, "ORB", atcore=atcore)
+                                      nimages, cell_to_index, "ORB", atcore=atcore, new_zeff_correction=qs_env%total_zeff_corr)
                END IF
             ELSE
                CALL build_core_ppl(matrix_h, matrix_p, force, virial, calculate_forces, use_virial, nder, &
                                    qs_kind_set, atomic_kind_set, particle_set, sab_orb, sac_ppl, &
-                                   nimages, cell_to_index, "ORB", atcore=atcore)
+                                   nimages, cell_to_index, "ORB", atcore=atcore,new_zeff_correction=qs_env%total_zeff_corr)                             
+            PRINT*, "Sagnik Mukhopadhyay change_12.1", qs_env%total_zeff_corr
             END IF
          END IF
       END IF
@@ -526,6 +535,10 @@ CONTAINS
                                  nimages, cell_to_index, "ORB", atcore=atcore)
          END IF
       END IF
+      
+      ! this is a part of twelvth change added by Sagnik Mukhopadhyay
+      !IF (PRESENT(new_zeff_correction)) CALL get_potential(potential=gth_potential, new_zeff_correction=new_zeff_correction)
+     ! 
 
    END SUBROUTINE core_matrices
 

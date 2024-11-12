@@ -108,7 +108,7 @@ MODULE qs_kind_types
    USE xtb_types,                       ONLY: deallocate_xtb_atom_param,&
                                               get_xtb_atom_param,&
                                               write_xtb_atom_param,&
-                                              xtb_atom_type
+                                              xtb_atom_type                                        
 #include "./base/base_uses.f90"
 
    IMPLICIT NONE
@@ -883,7 +883,7 @@ CONTAINS
                               ncgf, npgf, nset, nsgf, nshell, maxpol, maxlppl, maxlppnl, maxppnl, &
                               nelectron, maxder, max_ngrid_rad, max_sph_harm, maxg_iso_not0, lmax_rho0, &
                               basis_rcut, &
-                              basis_type, total_zeff_corr)
+                              basis_type, total_zeff_corr, new_zeff_correction)
 
       TYPE(qs_kind_type), DIMENSION(:), POINTER          :: qs_kind_set
       LOGICAL, INTENT(OUT), OPTIONAL :: all_potential_present, tnadd_potential_present, &
@@ -913,7 +913,15 @@ CONTAINS
       TYPE(qs_dftb_atom_type), POINTER                   :: dftb_parameter
       TYPE(qs_kind_type), POINTER                        :: qs_kind
       TYPE(sgp_potential_type), POINTER                  :: sgp_potential
-
+      ! this is a part of twelveth change added by Sagnik Mukhopadhyay
+      REAL(KIND=dp), INTENT(INOUT), OPTIONAL                :: new_zeff_correction
+     ! IF (PRESENT(new_zeff_correction)) CALL get_potential(potential=gth_potential, new_zeff_correction=new_zeff_correction)
+     IF (PRESENT(new_zeff_correction)) THEN
+     PRINT*, "Sagnik Mukhopadhyay change_13.3", new_zeff_correction
+     !CALL get_potential(potential=gth_potential, new_zeff_correction=new_zeff_correction)
+     END IF
+       
+      
       IF (PRESENT(basis_type)) THEN
          my_basis_type = basis_type
       ELSE
@@ -1141,7 +1149,8 @@ CONTAINS
                                      zeff=zeff, zeff_correction=zeff_correction)
                ELSE IF (ASSOCIATED(qs_kind%gth_potential)) THEN
                   CALL get_potential(potential=qs_kind%gth_potential, &
-                                     zeff=zeff, zeff_correction=zeff_correction)
+                                     zeff=zeff, zeff_correction=zeff_correction, new_zeff_correction=new_zeff_correction)
+                  !PRINT*, "great_it_is"
                ELSE IF (ASSOCIATED(qs_kind%sgp_potential)) THEN
                   CALL get_potential(potential=qs_kind%sgp_potential, &
                                      zeff=zeff, zeff_correction=zeff_correction)
@@ -1165,7 +1174,8 @@ CONTAINS
                   basis_rcut = MAX(basis_rcut, brcut)
                END IF
             END IF
-
+            
+            
             IF (PRESENT(total_zeff_corr)) THEN
                IF (ASSOCIATED(qs_kind%all_potential)) THEN
                   CALL get_potential(potential=qs_kind%all_potential, &
@@ -1173,6 +1183,7 @@ CONTAINS
                ELSE IF (ASSOCIATED(qs_kind%gth_potential)) THEN
                   CALL get_potential(potential=qs_kind%gth_potential, &
                                      zeff=zeff, zeff_correction=zeff_correction)
+                  !PRINT*, "great_it_is"
                ELSE IF (ASSOCIATED(qs_kind%sgp_potential)) THEN
                   CALL get_potential(potential=qs_kind%sgp_potential, &
                                      zeff=zeff, zeff_correction=zeff_correction)
@@ -1184,9 +1195,10 @@ CONTAINS
                
                         
             ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_11.13 zeff_correction =", zeff_correction, "total_zeff_corr=", total_zeff_corr
-
+            !PRINT*, "Sagnik Mukhopadhyay change_11.13 zeff_correction =", zeff_correction, "total_zeff_corr=", total_zeff_corr
+           
             END IF
+            
             
             IF (PRESENT(all_potential_present)) THEN
                IF (ASSOCIATED(all_potential)) THEN

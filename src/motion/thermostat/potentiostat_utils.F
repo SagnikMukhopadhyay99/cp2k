@@ -51,7 +51,7 @@ SUBROUTINE potentiostat_electron_count(dipole_pott, temp_part, z_eff, C_0, PHI_0
       n_electron = n_electron - C_0*(dipole_pott-PHI_0)*(1-exp(-dt/(R*C_0)))
       n_electron = n_electron + N*sqrt(k_B*temp_part*C_0*(1-exp(-2*dt/(R*C_0))))
       
-      !z_eff=n_electron
+      z_eff=n_electron
       
       !z_eff= z_eff *100
                       

@@ -228,7 +228,7 @@ CONTAINS
       PRINT*, "Sagnik Mukhopadhyay change_5.1", qs_env%total_zeff_corr
       
       ! This is a part of sixth change added by Sagnik Mukhopadhyay
-      qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
+      !qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
       PRINT*, "Sagnik Mukhopadhyay change_6.1", qs_env%total_zeff_corr
       
       
@@ -249,7 +249,7 @@ CONTAINS
          PRINT*, "Sagnik Mukhopadhyay change_5.2", qs_env%total_zeff_corr
          
          ! This is a part of sixth change added by Sagnik Mukhopadhyay
-      qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
+      !qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
       PRINT*, "Sagnik Mukhopadhyay change_6.2", qs_env%total_zeff_corr
 
          IF ((scf_control%density_guess .EQ. history_guess) .AND. (first_step_flag)) THEN
@@ -506,7 +506,7 @@ CONTAINS
       PRINT*, "Sagnik Mukhopadhyay change_5.9", qs_env%total_zeff_corr
       
       ! This is a part of sixth change added by Sagnik Mukhopadhyay
-      qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
+     ! qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
       PRINT*, "Sagnik Mukhopadhyay change_6.2", qs_env%total_zeff_corr
 
       scf_outer_loop: DO

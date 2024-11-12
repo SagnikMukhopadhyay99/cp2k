@@ -277,7 +277,7 @@ CONTAINS
              force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, simpar%dt)
    ! END IF
   !  END IF
-    PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, potentiostat%C_0
+    PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, potentiostat%potentiostat_present
 
    END SUBROUTINE md_energy
 

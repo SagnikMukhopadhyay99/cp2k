@@ -820,6 +820,9 @@ CONTAINS
                ccore = qs_kind%xtb_parameter%zeff*SQRT((alpha/pi)**3)
                CALL set_potential(qs_kind%all_potential, ccore_charge=ccore)
                qs_kind%xtb_parameter%zeff = qs_kind%xtb_parameter%zeff - zeff_correction
+               
+               ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+               PRINT*, "Sagnik Mukhopadhyay change_11.17 zeff_correction=", zeff_correction
             END IF
          END DO
          !
@@ -1552,6 +1555,9 @@ CONTAINS
       CALL get_qs_kind_set(qs_kind_set, total_zeff_corr=total_zeff_corr)
       ! store it in qs_env
       qs_env%total_zeff_corr = total_zeff_corr
+      
+      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
+               PRINT*, "Sagnik Mukhopadhyay change_11.18 total_zeff_corr=", total_zeff_corr
 
       ! store the number of electrons once an for all
       CALL qs_subsys_set(subsys, &
