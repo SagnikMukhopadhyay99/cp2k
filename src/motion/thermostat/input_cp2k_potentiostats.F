@@ -50,6 +50,12 @@ SUBROUTINE create_potentiostat_section(section)
                           default_l_val=.FALSE.)
       CALL section_add_keyword(section, keyword)
       CALL keyword_release(keyword)
+      
+      CALL keyword_create(keyword, __LOCATION__, name="Tau", &
+                          description="Specify the relaxation time", &
+                          default_r_val=0.0_dp)
+      CALL section_add_keyword(section, keyword)
+      CALL keyword_release(keyword)
 
    END SUBROUTINE create_potentiostat_section
 

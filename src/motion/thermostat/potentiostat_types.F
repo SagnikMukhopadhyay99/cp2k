@@ -1,3 +1,4 @@
+# 1 "/home/sagnik/apps/test_1/cp2k/src/motion/thermostat/potentiostat_types.F" 1
 MODULE potentiostat_types
 
    USE input_section_types,             ONLY: section_vals_get,&
@@ -19,6 +20,7 @@ MODULE potentiostat_types
       INTEGER                          :: ref_count = 0
       REAL(KIND=dp)                    :: C_0 = 0.0_dp
       REAL(KIND=dp)                    :: PHI_0 = 0.0_dp
+      REAL(KIND=dp)                    :: Tau = 0.0_dp
       LOGICAL                          :: potentiostat_present= .FALSE.
       TYPE(section_vals_type), POINTER :: section => NULL()
       
@@ -46,6 +48,7 @@ MODULE potentiostat_types
    CALL section_vals_val_get(potentiostat_section, "C_0", r_val=potentiostat%C_0)
    CALL section_vals_val_get(potentiostat_section, "PHI_0", r_val=potentiostat%PHI_0)
    CALL section_vals_val_get(potentiostat_section, "potentiostat_present", l_val=potentiostat%potentiostat_present)
+   CALL section_vals_val_get(potentiostat_section, "Tau", r_val=potentiostat%Tau)
    END SUBROUTINE create_potentiostat_type
    
    !***********************************************************************************************

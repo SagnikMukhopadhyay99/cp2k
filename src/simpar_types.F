@@ -89,6 +89,9 @@ MODULE simpar_types
       REAL(KIND=dp) :: soften_delta = -1.0_dp
       ! MD initialisation method
       INTEGER       :: initialization_method = -1
+      
+      ! this change added by Sagnik MUkhopadhyay
+      INTEGER       :: step_number
    END TYPE simpar_type
 
    PUBLIC :: simpar_type, &

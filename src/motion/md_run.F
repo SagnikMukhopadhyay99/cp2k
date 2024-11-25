@@ -471,6 +471,11 @@ CONTAINS
 
       ! Real MD Loop
       DO istep = 1, simpar%nsteps, md_stride
+      
+      
+          ! this change added by Sagnik Mukhopadhyay
+          simpar%step_number = istep
+          
          ! Increase counters
          itimes = itimes + 1
          time = time + simpar%dt
@@ -543,6 +548,8 @@ CONTAINS
          END IF
 
          IF (simpar%ensemble /= reftraj_ensemble) THEN
+         PRINT*, "hey hello how r u"
+         
             CALL md_energy(md_env, md_ener)
             CALL temperature_control(simpar, md_env, md_ener, force_env, logger)
             CALL comvel_control(md_ener, force_env, md_section, logger)

@@ -267,17 +267,20 @@ CONTAINS
       !PRINT*, "Sagnik Mukhopadhyay change_11.9", simpar%dt
       !CALL section_vals_val_get(md_section, "TIMESTEP", r_val=dt)
       !print*, "Sagnik Mukhopadhyay change_11.11", 
-    !  PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
+      !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
       ! This is a part of eleventh change added by Sagnik Mukhopadhyay
       !PRINT*, energy%surf
       
      ! IF (PRESENT(potentiostat)) then
       !IF (PRESENT(dt)) then
+      IF (simpar%step_number >= 1) then
   CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
-             force_env%qs_env%total_zeff_corr, potentiostat%C_0, potentiostat%PHI_0, simpar%dt)
-   ! END IF
+             force_env%qs_env%total_zeff_corr, potentiostat, simpar%dt)
+      END IF
+   ! END IF   call potentiostat if step is not zeroth
   !  END IF
-    PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, potentiostat%potentiostat_present
+    PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, simpar%step_number
+    PRINT*, "Sagnik Mukhopadhyay change_final",energy%surf_dipole
 
    END SUBROUTINE md_energy
 
@@ -817,7 +820,7 @@ CONTAINS
                   WRITE (iw, '(T2,A,T39,2(1X,E20.12))') &
                      'MD| Kinetic energy [hartree]', md_ener%ekin, averages%avekin
                   WRITE (iw, '(T2,A,T39,2(1X,F20.6))') &
-                     'MD| Temperature [K] Mukhopadhyay', md_ener%temp_part, averages%avetemp
+                     'MD| Temperature [K]', md_ener%temp_part, averages%avetemp
                ELSE
                   WRITE (iw, '(T2,A,T39,2(1X,E20.12))') &
                      'MD| Total kinetic energy [hartree]', md_ener%ekin, averages%avekin

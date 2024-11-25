@@ -1149,7 +1149,7 @@ CONTAINS
                                      zeff=zeff, zeff_correction=zeff_correction)
                ELSE IF (ASSOCIATED(qs_kind%gth_potential)) THEN
                   CALL get_potential(potential=qs_kind%gth_potential, &
-                                     zeff=zeff, zeff_correction=zeff_correction, new_zeff_correction=new_zeff_correction)
+                                     zeff=zeff, zeff_correction=zeff_correction)
                   !PRINT*, "great_it_is"
                ELSE IF (ASSOCIATED(qs_kind%sgp_potential)) THEN
                   CALL get_potential(potential=qs_kind%sgp_potential, &
@@ -1181,9 +1181,9 @@ CONTAINS
                   CALL get_potential(potential=qs_kind%all_potential, &
                                      zeff=zeff, zeff_correction=zeff_correction)
                ELSE IF (ASSOCIATED(qs_kind%gth_potential)) THEN
+               
                   CALL get_potential(potential=qs_kind%gth_potential, &
-                                     zeff=zeff, zeff_correction=zeff_correction)
-                  !PRINT*, "great_it_is"
+                                     zeff=zeff, zeff_correction=zeff_correction, new_zeff_correction=new_zeff_correction)
                ELSE IF (ASSOCIATED(qs_kind%sgp_potential)) THEN
                   CALL get_potential(potential=qs_kind%sgp_potential, &
                                      zeff=zeff, zeff_correction=zeff_correction)
@@ -1250,6 +1250,12 @@ CONTAINS
 
             IF (PRESENT(lmax_rho0)) THEN
                lmax_rho0 = MAX(lmax_rho0, lmax_rho0_kind)
+            END IF
+            
+            
+            IF (PRESENT(new_zeff_correction)) THEN
+            PRINT*, "Sagnik Mukhopadhyay change_13.5", new_zeff_correction
+              CALL get_potential(potential=gth_potential, zeff_correction=zeff_correction, new_zeff_correction=new_zeff_correction)
             END IF
 
          END DO
