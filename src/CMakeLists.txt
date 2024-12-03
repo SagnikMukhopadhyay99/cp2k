@@ -72,6 +72,8 @@ list(
   bse_main.F
   bse_full_diag.F
   bse_iterative.F
+  bse_print.F
+  bse_properties.F
   bse_util.F
   bsse.F
   cell_methods.F
@@ -131,6 +133,9 @@ list(
   dm_ls_scf_types.F
   domain_submatrix_methods.F
   domain_submatrix_types.F
+  eeq_data.F
+  eeq_input.F
+  eeq_method.F
   ec_efield_local.F
   ec_environment.F
   ec_env_types.F
@@ -646,6 +651,7 @@ list(
   qs_neighbor_list_types.F
   qs_nl_hash_table_types.F
   qs_nonscf.F
+  qs_nonscf_utils.F
   qs_o3c_methods.F
   qs_o3c_types.F
   qs_oce_methods.F
@@ -839,10 +845,15 @@ list(
   xas_tp_scf.F
   xray_diffraction.F
   xtb_coulomb.F
+  xtb_eeq.F
   xtb_ehess.F
   xtb_ehess_force.F
+  xtb_hcore.F
+  xtb_hab_force.F
+  xtb_ks_matrix.F
   xtb_matrices.F
   xtb_parameters.F
+  xtb_potentials.F
   xtb_types.F)
 
 list(
@@ -1349,7 +1360,7 @@ list(
   xc/xc_xpbe_hole_t_c_lr.F
   xc/xc_xwpbe.F)
 
-list(APPEND CP2K_SRCS_C sockets.c base/machine_cpuid.c)
+list(APPEND CP2K_SRCS_C sockets.c base/machine_cpuid.c base/openmp_trace.c)
 
 set(CP2K_DBM_SRCS_C
     dbm/dbm_distribution.c
@@ -1485,9 +1496,9 @@ if(CP2K_USE_CUDA)
   else()
     target_link_libraries(
       cp2k_cuda_libs
-      INTERFACE $<$<BOOL:${CP2K_USE_CUSOLVER_MP}>:cp2k::CUSOLVER_MP::cusolvermp>
-                CUDA::cufft CUDA::cufftw CUDA::cublas CUDA::cudart
-                CUDA::cuda_driver)
+      INTERFACE
+        $<$<BOOL:${CP2K_USE_CUSOLVER_MP}>:cp2k::CUSOLVER_MP::cusolver_mp>
+        CUDA::cufft CUDA::cufftw CUDA::cublas CUDA::cudart CUDA::cuda_driver)
   endif()
 endif()
 
