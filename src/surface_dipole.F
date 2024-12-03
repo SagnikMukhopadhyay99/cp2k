@@ -242,9 +242,6 @@ CONTAINS
          END IF
          vdip = vdip*cutoff
          
-         ! This is a part of ninth change added by Sagnik Mukghopadhyay
-         !PRINT*, "Sagnik Mukhopadhyay change_9.1", vdip
-
          IF (idir_surfdip == 3) THEN
             vdip_r%array(bo(1, 1):bo(2, 1), bo(1, 2):bo(2, 2), irho) = &
                vdip_r%array(bo(1, 1):bo(2, 1), bo(1, 2):bo(2, 2), irho) + vdip

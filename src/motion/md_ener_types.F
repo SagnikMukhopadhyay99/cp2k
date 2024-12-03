@@ -12,9 +12,6 @@
 MODULE md_ener_types
 
    USE kinds,                           ONLY: dp
-   
-   !this a part of eleventh change added by Sagnik Mukhopadhyay
-   USE potentiostat_types,             ONLY: potentiostat_type
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE

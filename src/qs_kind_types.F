@@ -915,10 +915,8 @@ CONTAINS
       TYPE(sgp_potential_type), POINTER                  :: sgp_potential
       ! this is a part of twelveth change added by Sagnik Mukhopadhyay
       REAL(KIND=dp), INTENT(INOUT), OPTIONAL                :: new_zeff_correction
-     ! IF (PRESENT(new_zeff_correction)) CALL get_potential(potential=gth_potential, new_zeff_correction=new_zeff_correction)
      IF (PRESENT(new_zeff_correction)) THEN
      PRINT*, "Sagnik Mukhopadhyay change_13.3", new_zeff_correction
-     !CALL get_potential(potential=gth_potential, new_zeff_correction=new_zeff_correction)
      END IF
        
       
@@ -1192,10 +1190,6 @@ CONTAINS
                   zeff_correction = 0.0_dp
                END IF
                total_zeff_corr = total_zeff_corr + qs_kind_set(ikind)%natom*zeff_correction
-               
-                        
-            ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-            !PRINT*, "Sagnik Mukhopadhyay change_11.13 zeff_correction =", zeff_correction, "total_zeff_corr=", total_zeff_corr
            
             END IF
             
@@ -1252,7 +1246,7 @@ CONTAINS
                lmax_rho0 = MAX(lmax_rho0, lmax_rho0_kind)
             END IF
             
-            
+            ! this is a part of thirteenth change added by Sagnik Mukhopadhyay
             IF (PRESENT(new_zeff_correction)) THEN
             PRINT*, "Sagnik Mukhopadhyay change_13.5", new_zeff_correction
               CALL get_potential(potential=gth_potential, zeff_correction=zeff_correction, new_zeff_correction=new_zeff_correction)

@@ -818,15 +818,12 @@ CONTAINS
       IF (PRESENT(cval_nlcc)) cval_nlcc => potential%cval_nlcc
       
       ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-      !IF (potentiostat_present) zeff_correction=total_zeff_corr
       IF (PRESENT(new_zeff_correction)) THEN
-            zeff_correction=new_zeff_correction
-            PRINT*, "Sagnik Mukhopadhyay change_13.4 zeff_correction =", zeff_correction
-         END IF
+         zeff_correction=new_zeff_correction
+         PRINT*, "Sagnik Mukhopadhyay change_13.4 zeff_correction =", zeff_correction
+      END IF
       
       
-      
-
    END SUBROUTINE get_gth_potential
 
 ! **************************************************************************************************

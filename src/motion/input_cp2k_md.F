@@ -51,6 +51,7 @@ MODULE input_cp2k_md
    
    ! This is a part of tenth change added by Sagnik Mukhopadhyay"
    USE input_cp2k_potentiostats,                  ONLY: create_potentiostat_section
+   
 #include "../base/base_uses.f90"
 
    IMPLICIT NONE
@@ -63,14 +64,6 @@ MODULE input_cp2k_md
    
 
 CONTAINS
-
-
-! This is a part of tenth change added by Sagnik mukhopadhyay
-!***************************************************************************************************
-! adding subsection for SGM_POTENTIAL
-!***************************************************************************************************   
-
-
 ! **************************************************************************************************
 !> \brief ...
 !> \param section will contain the md section

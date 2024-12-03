@@ -88,21 +88,10 @@ MODULE md_energies
    USE virial_types,                    ONLY: virial_type
    
    ! This is a part of ninth change added by Sagnik Mukhopadhyay (9.3)
-    USE qs_energy_types,                ONLY: qs_energy_type
-    USE qs_environment_types,           ONLY: get_qs_env,&
-                                              qs_environment_type
-    USE input_keyword_types,             ONLY: keyword_create,&
-                                              keyword_release,&
-                                              keyword_type
-   USE input_section_types,             ONLY: section_add_keyword,&
-                                              section_add_subsection,&
-                                              section_create,&
-                                              section_release,&
-                                              section_type
-    !USE input_cp2k_md,                ONLY: create_potentiostat_section
-    Use potentiostat_types,            ONLY: potentiostat_type,&
-                                            create_potentiostat_type
-    USE potentiostat_utils,                  ONLY: potentiostat_electron_count
+   USE qs_energy_types,                 ONLY: qs_energy_type
+   USE qs_environment_types,            ONLY: get_qs_env
+   Use potentiostat_types,              ONLY: potentiostat_type
+   USE potentiostat_utils,              ONLY: potentiostat_electron_count
     
     
 #include "../base/base_uses.f90"
@@ -215,17 +204,8 @@ CONTAINS
       TYPE(simpar_type), POINTER                         :: simpar
       
       ! This is a part of tenth change added by Sagnik Mukhopadhyay
-      !INTEGER                                            :: PHI_0, C_0
-      !REAL(KIND=DP)                                      :: PHI_0, C_0
-     ! TYPE(section_vals_type), POINTER                   :: md_section, motion_section
-     ! TYPE(simpar_type), POINTER                         :: simpar_1
-      !TYPE(potentiostat_type), POINTER                   :: potentiostat
-      !TYPE(section_type), POINTER                   ::  potentiostat_section, section
-     TYPE(qs_energy_type), POINTER                      :: energy
-      !real(kind=dp)                                   :: temp
-     ! TYPE(section_vals_type), POINTER                   :: md_section
-   TYPE(potentiostat_type), POINTER                   :: potentiostat
-   !REAL(kind=dp)                                      :: dt
+      TYPE(qs_energy_type), POINTER                      :: energy
+      TYPE(potentiostat_type), POINTER                   :: potentiostat
 
       NULLIFY (atomic_kinds, atomic_kind_set, force_env, &
                particles, subsys, simpar, energy, potentiostat)
@@ -248,37 +228,13 @@ CONTAINS
 
       CALL compute_conserved_quantity(md_env, md_ener, tkind=tkind, &
                                       tshell=tshell, natom=natom)
-                                      
-      ! This is part of eighth change added by Sagnik Mukhopdhyay
-         PRINT*, "Sagnik Mukhopadhyay change_8.1", force_env%qs_env%total_zeff_corr
-         
+                                            
       ! This is a part of tenth change added by Sagnik Mukhopadhyay
-      
-      !IF (PRESENT(section_vals)) THEN
-      
-      
-      !CALL read_potentiostat(C_0, PHI_0)
-     !  CALL create_potentiostat_type(potentiostat, md_section)
-     ! PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
-      !END IF
-      !CALL create_potentiostat_type(potentiostat, md_section)
-      !CALL read_md_low(simpar_1, motion_section, md_section)
       CALL get_qs_env(force_env%qs_env, energy=energy)
-      !PRINT*, "Sagnik Mukhopadhyay change_11.9", simpar%dt
-      !CALL section_vals_val_get(md_section, "TIMESTEP", r_val=dt)
-      !print*, "Sagnik Mukhopadhyay change_11.11", 
-      !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
-      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-      !PRINT*, energy%surf
-      
-     ! IF (PRESENT(potentiostat)) then
-      !IF (PRESENT(dt)) then
       IF (simpar%step_number >= 1) then
-  CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
+         CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
              force_env%qs_env%total_zeff_corr, potentiostat, simpar%dt)
       END IF
-   ! END IF   call potentiostat if step is not zeroth
-  !  END IF
     PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, simpar%step_number
     PRINT*, "Sagnik Mukhopadhyay change_final",energy%surf_dipole
 
@@ -357,13 +313,6 @@ CONTAINS
       TYPE(thermal_regions_type), POINTER                :: thermal_regions
       TYPE(thermostats_type), POINTER                    :: thermostats
       TYPE(virial_type), POINTER                         :: virial
-      
-      ! This is a part of ninth change added by Sagnik mukhopadhyay
-      !TYPE(qs_energy_type), POINTER                      :: energy
-      !TYPE(qs_environment_type)                          :: qs_env_mukhopadhyay
-      !TYPE(md_environment_type), POINTER                 :: md_env
-      !TYPE(md_ener_type), POINTER                        :: md_ener
-      
 
       NULLIFY (logger)
       logger => cp_get_default_logger()
@@ -555,9 +504,6 @@ CONTAINS
          IF (ASSOCIATED(force_env%qs_env)) THEN
             CALL write_polarisability_tensor(force_env, motion_section, itimes, time*femtoseconds, my_pos, my_act)
          END IF
-         
-         ! This is part of eighth change added by Sagnik Mukhopdhyay
-         !PRINT*, "Sagnik Mukhopadhyay change_8.1", force_env%qs_env%total_zeff_corr
 
          ! Temperature per Kinds
          IF (simpar%temperature_per_kind) THEN
@@ -653,15 +599,7 @@ CONTAINS
          END IF
       END IF
       init = .FALSE.
-      CALL set_md_env(md_env, init=init)
-      
-      ! This is a part of ninth change added by sagnik Mukhopadhyay (9.3)
-      
-      !CALL get_qs_env(force_env%qs_env, energy=energy)
-      !PRINT*, "Sagnik Mukhopadhyay change_9.4",energy%surf_dipole
-      !Print*, "Sagnik Mukhopadhyay change_11.10", itimes, time, time/itimes
-      
-      
+      CALL set_md_env(md_env, init=init)    
       CALL timestop(handle)
    END SUBROUTINE md_write_output
 

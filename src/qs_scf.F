@@ -209,8 +209,6 @@ CONTAINS
       TYPE(qs_scf_env_type), POINTER                     :: scf_env
       TYPE(scf_control_type), POINTER                    :: scf_control
       TYPE(section_vals_type), POINTER                   :: dft_section, input, scf_section
-      ! Sagnik Mukhopadhyay added this change fifth change
-      ! REAL(KIND=dp)                                      :: total_zeff_corr
 
       NULLIFY (scf_env)
       logger => cp_get_default_logger()
@@ -224,14 +222,6 @@ CONTAINS
       CALL get_qs_env(qs_env, scf_env=scf_env, input=input, &
                       dft_control=dft_control, scf_control=scf_control)
                      
-      ! This is a part of fifth change added by Sagnik Mukhopadhyay
-      PRINT*, "Sagnik Mukhopadhyay change_5.1", qs_env%total_zeff_corr
-      
-      ! This is a part of sixth change added by Sagnik Mukhopadhyay
-      !qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
-      PRINT*, "Sagnik Mukhopadhyay change_6.1", qs_env%total_zeff_corr
-      
-      
       IF (scf_control%max_scf > 0) THEN
 
          dft_section => section_vals_get_subs_vals(input, "DFT")
@@ -244,13 +234,6 @@ CONTAINS
          ELSE
             CALL qs_scf_env_initialize(qs_env, scf_env)
          END IF
-         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-         PRINT*, "Sagnik Mukhopadhyay change_5.2", qs_env%total_zeff_corr
-         
-         ! This is a part of sixth change added by Sagnik Mukhopadhyay
-      !qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
-      PRINT*, "Sagnik Mukhopadhyay change_6.2", qs_env%total_zeff_corr
 
          IF ((scf_control%density_guess .EQ. history_guess) .AND. (first_step_flag)) THEN
             max_scf_tmp = scf_control%max_scf
@@ -266,10 +249,7 @@ CONTAINS
             ! Third SCF loop needed for CDFT with OT to properly restart OT inner loop
             CALL cdft_scf(qs_env=qs_env, should_stop=should_stop)
          END IF
-         
-         ! This is a part of fifth change added Sagnik Mukhopadhyay
-         PRINT*, "Sagnik Mukhopadhyay change_5.3", qs_env%total_zeff_corr
-
+ 
          ! If SCF has not converged, then we should not start MP2
          IF (ASSOCIATED(qs_env%mp2_env)) qs_env%mp2_env%hf_fail = .NOT. converged
 
@@ -278,10 +258,7 @@ CONTAINS
             ihistory = scf_env%outer_scf%iter_count
             CALL get_qs_env(qs_env, gradient_history=gradient_history, &
                             variable_history=variable_history)
-                            
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay"
-            PRINT*, "Sagnik Mukhopadhyay change_5.4", qs_env%total_zeff_corr
-            
+       
             ! We only store the latest two values
             gradient_history(:, 1) = gradient_history(:, 2)
             gradient_history(:, 2) = scf_env%outer_scf%gradient(:, ihistory)
@@ -319,9 +296,6 @@ CONTAINS
             scf_control%outer_scf%have_scf = outer_scf_loop
             first_step_flag = .FALSE.
          END IF
-         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-         PRINT*, "Sagnik Mukhopadhyay change_5.5", qs_env%total_zeff_corr
 
          ! *** compute properties that depend on the converged wavefunction
          IF (.NOT. (should_stop)) CALL qs_scf_compute_properties(qs_env)
@@ -345,15 +319,8 @@ CONTAINS
          IF (PRESENT(total_scf_steps)) THEN
             total_scf_steps = tsteps
          END IF
-         
-         ! This is a part of fifth change made by Sagnik Mukhopadhyay
-         PRINT*, "Sagnik Mukhopadhyay change_5.6", qs_env%total_zeff_corr
-
       END IF
       
-      ! This is a part of fifth change made by Sagnik Mukhopadhyay
-      PRINT*, "Sagnik Mukhopadhyay change_5.7", qs_env%total_zeff_corr
-
    END SUBROUTINE scf
 
 ! **************************************************************************************************
@@ -439,9 +406,6 @@ CONTAINS
                       results=results, &
                       pw_env=pw_env, &
                       para_env=para_env)
-                      
-      ! This is a part of fifth change made by Sagnik Mukhopadhyay"
-      PRINT*, "Sagnik Mukhopadhyay change_5.7", qs_env%total_zeff_corr
 
       CALL qs_rho_get(rho, rho_ao_kp=rho_ao_kp)
 
@@ -457,13 +421,7 @@ CONTAINS
 ! when switch_surf_dip is switched on, indicate storing mos from the last converged step
       IF (dft_control%switch_surf_dip) THEN
          CALL get_qs_env(qs_env, mos_last_converged=mos_last_converged)
-         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-         PRINT*, "Sagnik Mukhopadhyay change_5.8", qs_env%total_zeff_corr
-         
-         
-      
-      
+  
          DO ispin = 1, dft_control%nspins
             CALL reassign_allocated_mos(mos(ispin), mos_last_converged(ispin))
          END DO
@@ -502,23 +460,10 @@ CONTAINS
       total_steps = 0
       energy%tot_old = 0.0_dp
       
-      ! This is a part of fifth change added by Sagnik Mukhopadhyay
-      PRINT*, "Sagnik Mukhopadhyay change_5.9", qs_env%total_zeff_corr
-      
-      ! This is a part of sixth change added by Sagnik Mukhopadhyay
-     ! qs_env%total_zeff_corr = qs_env%total_zeff_corr / 2
-      PRINT*, "Sagnik Mukhopadhyay change_6.2", qs_env%total_zeff_corr
-
       scf_outer_loop: DO
 
          CALL init_scf_loop(scf_env=scf_env, qs_env=qs_env, &
-                            scf_section=scf_section)
-                            
- ! This is the fifth change added by Sagnik Mukhopadhyay
- PRINT*, "Sagnik Mukhopadhyay change_5.10", qs_env%total_zeff_corr
-                            
- ! This is the fourth change made by Sagnik Mukhopadhyay
- PRINT*, "Sagnik Mukhopadhyay change_4", scf_env%sum_zeff_corr        
+                            scf_section=scf_section)     
 
          CALL qs_scf_set_loop_flags(scf_env, diis_step, &
                                     energy_only, just_energy, exit_inner_loop)
@@ -549,14 +494,8 @@ CONTAINS
             CALL qs_ks_update_qs_env(qs_env, just_energy=just_energy, &
                                      calculate_forces=.FALSE.)
                                      
-            ! This is part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.11", qs_env%total_zeff_corr
-
             ! print 'heavy weight' or relatively expensive quantities
             CALL qs_scf_loop_print(qs_env, scf_env, para_env)
-            
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.12", qs_env%total_zeff_corr
 
             IF (do_kpoints) THEN
                ! kpoints
@@ -565,15 +504,9 @@ CONTAINS
                ! Gamma points only
                CALL qs_scf_new_mos(qs_env, scf_env, scf_control, scf_section, diis_step, energy_only)
             END IF
-            
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.13", qs_env%total_zeff_corr
 
             ! Print requested MO information (can be computationally expensive with OT)
             CALL qs_scf_write_mos(qs_env, scf_env, final_mos=.FALSE.)
-            
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.14", qs_env%total_zeff_corr
 
             CALL qs_scf_density_mixing(scf_env, rho, para_env, diis_step)
 
@@ -596,17 +529,11 @@ CONTAINS
             IF (exit_inner_loop) THEN
 
                CALL qs_scf_inner_finalize(scf_env, qs_env, diis_step, output_unit)
-               
-               ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.15", qs_env%total_zeff_corr
 
                CALL qs_scf_check_outer_exit(qs_env, scf_env, scf_control, should_stop, &
                                             outer_loop_converged, exit_outer_loop)
                                             
-               ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.16", qs_env%total_zeff_corr
-
-               ! Let's tag the last SCF cycle so we can print informations only of the last step
+              ! Let's tag the last SCF cycle so we can print informations only of the last step
                IF (exit_outer_loop) CALL cp_iterate(logger%iter_info, last=.TRUE., iter_nr=iter_count)
 
             END IF
@@ -640,9 +567,6 @@ CONTAINS
 
             CALL qs_scf_rho_update(rho, qs_env, scf_env, ks_env, &
                                    mix_rho=scf_env%mixing_method >= gspace_mixing_nr)
-            
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.17", qs_env%total_zeff_corr
 
             CALL timestop(handle2)
 
@@ -671,9 +595,6 @@ CONTAINS
          !
          CALL outer_loop_optimize(scf_env, scf_control)
          CALL outer_loop_update_qs_env(qs_env, scf_env)
-         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.18", qs_env%total_zeff_corr
          CALL qs_ks_did_change(ks_env, potential_changed=.TRUE.)
 
       END DO scf_outer_loop
@@ -711,10 +632,6 @@ CONTAINS
                                   mos(ispin)%mo_coeff) !fm -> dbcsr
          END IF !fm->dbcsr
       END DO !fm -> dbcsr
-      
-      
-      ! This is a part ninth change added by Sagnik Mukhopadhyay
-      PRINT*, "Sagnik Mukhopadhyay change_9.2", energy%surf_dipole
 
       CALL cp_rm_iter_level(logger%iter_info, level_name="QS_SCF")
       CALL timestop(handle)
@@ -750,9 +667,6 @@ CONTAINS
       TYPE(mo_set_type), DIMENSION(:), POINTER           :: mos
       TYPE(scf_control_type), POINTER                    :: scf_control
       
-      ! added as a part of second change by Sagnik Mukhopadhyay
-      REAL(KIND=dp)                                      :: tot_zeff_corr, total_zeff_corr
-
       CALL timeset(routineN, handle)
 
       NULLIFY (scf_control, matrix_s, matrix_ks, dft_control, mos, mo_coeff, kpoints)
@@ -767,9 +681,6 @@ CONTAINS
                       kpoints=kpoints, &
                       mos=mos)
                       
-      ! 1st change added by Sagnik Mukhopadhyay
-      PRINT*, "Sagnik Mukhopadhyay change_1", qs_env%total_zeff_corr
-
       ! if using mo_coeff_b then copy to fm
       DO ispin = 1, SIZE(mos) !fm->dbcsr
          IF (mos(1)%use_mo_coeff_b) THEN !fm->dbcsr
@@ -783,11 +694,7 @@ CONTAINS
          IF (.NOT. scf_control%diagonalization%mom) &
             CALL set_mo_occupation(mo_set=mos(ispin), &
                                    smear=scf_control%smear)!, tot_zeff_corr=tot_zeff_corr)
-      ! second change added by Sagnik Mukhopadhyay, adding tot_zeff_corr in call 
-      ! set_mo_occupation. also declared this in variable declaration part tot_zeff_corr 
-      
-      ! third change added by Sagnik Mukhopadhyay to print tot_zeff_corr
-      PRINT*, "Sagnik Mukhopadhyay change_3", tot_zeff_corr, total_zeff_corr
+
       END DO
 
       SELECT CASE (scf_env%method)
@@ -824,9 +731,6 @@ CONTAINS
 
       CASE (ot_diag_method_nr)
          CALL get_qs_env(qs_env, matrix_ks=matrix_ks, matrix_s=matrix_s)
-         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.19", qs_env%total_zeff_corr
 
          IF (.NOT. scf_env%skip_diis) THEN
             IF (.NOT. ASSOCIATED(scf_env%scf_diis_buffer)) THEN
@@ -854,9 +758,7 @@ CONTAINS
                                      scf_control%diagonalization%ot_settings%precond_solver_type, &
                                      scf_control%diagonalization%ot_settings%energy_gap, dft_control%nspins)
         
-        ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.20", qs_env%total_zeff_corr
-
+ 
       CASE (block_davidson_diag_method_nr)
          ! Preconditioner initialized within the loop, when required
       CASE (ot_method_nr)
@@ -864,9 +766,6 @@ CONTAINS
                          has_unit_metric=has_unit_metric, &
                          matrix_s=matrix_s, &
                          matrix_ks=matrix_ks)
-                         
-         ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.21", qs_env%total_zeff_corr
 
          ! reortho the wavefunctions if we are having an outer scf and
          ! this is not the first iteration
@@ -923,19 +822,13 @@ CONTAINS
             ! might need the KS matrix to init properly
             CALL qs_ks_update_qs_env(qs_env, just_energy=.FALSE., &
                                      calculate_forces=.FALSE.)
-                                     
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.22", qs_env%total_zeff_corr
-
+ 
             ! if an old preconditioner is still around (i.e. outer SCF is active),
             ! remove it if this could be worthwhile
             IF (.NOT. reuse_precond) &
                CALL restart_preconditioner(qs_env, scf_env%ot_preconditioner, &
                                            scf_env%qs_ot_env(1)%settings%preconditioner_type, &
                                            dft_control%nspins)
-                                           
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.23", qs_env%total_zeff_corr
 
             !
             ! preconditioning still needs to be done correctly with has_unit_metric
@@ -954,9 +847,7 @@ CONTAINS
                                            scf_env%qs_ot_env(1)%settings%energy_gap, dft_control%nspins, &
                                            has_unit_metric=has_unit_metric, &
                                            chol_type=scf_env%qs_ot_env(1)%settings%cholesky_type)
-                                           
-            ! This is a part of fifth change added by Sagnik Mukhopadhyay
-            PRINT*, "Sagnik Mukhopadhyay change_5.24", qs_env%total_zeff_corr
+
             IF (reuse_precond) reuse_precond = .FALSE.
 
             CALL ot_scf_init(mo_array=mos, matrix_s=orthogonality_metric, &

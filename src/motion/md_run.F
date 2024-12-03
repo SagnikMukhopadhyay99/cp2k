@@ -214,8 +214,6 @@ CONTAINS
       
       ! This is a part of change added by Sagnik Mukhopadhyay
       TYPE(potentiostat_type), POINTER                   :: potentiostat
-         !TYPE(qs_energy_type), POINTER                      :: energy
-        ! real(kind=dp)                                   :: temp
 
       CALL timeset(routineN, handle)
       CPASSERT(ASSOCIATED(globenv))
@@ -233,11 +231,6 @@ CONTAINS
       free_energy_section => section_vals_get_subs_vals(motion_section, "FREE_ENERGY")
       constraint_section => section_vals_get_subs_vals(motion_section, "CONSTRAINT")
       CALL section_vals_val_get(global_section, "SAVE_MEM", l_val=save_mem)
-      
-      ! This is a part of eleventh change added by Sagnik Mukhopadhyay
-     ! CALL potentiostat_electron_count(temp)
-      
-
       CALL section_vals_val_get(global_section, "RUN_TYPE", i_val=run_type_id)
       IF (run_type_id == ehrenfest) CALL set_md_env(md_env, ehrenfest_md=.TRUE.)
 
@@ -265,7 +258,6 @@ CONTAINS
       ! This is a part of change added by Sagnik Mukhopadhyay
       ! If requested setup potentiostat
       CALL create_potentiostat_type(potentiostat, md_section)
-      PRINT*, "Sagnik Mukhopadhyay change_10.1", potentiostat%PHI_0, potentiostat%C_0
 
       ! If requested setup Thermostats
       CALL create_thermostats(thermostats, md_section, force_env, simpar, para_env, &
@@ -547,9 +539,7 @@ CONTAINS
             EXIT
          END IF
 
-         IF (simpar%ensemble /= reftraj_ensemble) THEN
-         PRINT*, "hey hello how r u"
-         
+         IF (simpar%ensemble /= reftraj_ensemble) THEN         
             CALL md_energy(md_env, md_ener)
             CALL temperature_control(simpar, md_env, md_ener, force_env, logger)
             CALL comvel_control(md_ener, force_env, md_section, logger)

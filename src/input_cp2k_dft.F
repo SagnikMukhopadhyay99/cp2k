@@ -107,8 +107,6 @@ MODULE input_cp2k_dft
    PUBLIC :: create_bsse_section
    PUBLIC :: create_interp_section
    PUBLIC :: create_mgrid_section
-   ! This a part of tenth change added by Sagnik mukhopadhyay
-   !PUBLIC :: create_potentiostat_section
 
 CONTAINS
 
