@@ -231,10 +231,13 @@ CONTAINS
                                             
       ! This is a part of tenth change added by Sagnik Mukhopadhyay
       CALL get_qs_env(force_env%qs_env, energy=energy)
+      IF (potentiostat%potentiostat_present) THEN
       IF (simpar%step_number >= 1) then
-         CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,& 
+         CALL potentiostat_electron_count(energy%surf_dipole,md_ener%temp_part,&
              force_env%qs_env%total_zeff_corr, potentiostat, simpar%dt)
       END IF
+      END IF
+
     PRINT*, "Sagnik Mukhopadhyay change_11.10", force_env%qs_env%total_zeff_corr, simpar%step_number
     PRINT*, "Sagnik Mukhopadhyay change_final",energy%surf_dipole
 
